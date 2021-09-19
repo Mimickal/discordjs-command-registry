@@ -1,0 +1,27 @@
+{
+  "name": "discord-command-registry",
+  "version": "1.0.0",
+  "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://github.com/Mimickal/discordjs-command-registry#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mimickal/discordjs-command-registry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mimickal/discordjs-command-registry/issues"
+  },
+  "keywords": [
+    "discord.js",
+    "discord",
+    "slash",
+    "command",
+    "registry",
+    "library"
+  ],
+  "author": "Mimickal",
+  "license": "LGPL-3.0"
+}

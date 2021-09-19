@@ -1,0 +1,7 @@
+# Vim things
+*.swp
+
+# Node things
+node_modules
+.nyc_output
+
