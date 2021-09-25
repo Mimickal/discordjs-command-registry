@@ -12,11 +12,42 @@
  * @external SlashCommandBuilder
  * @see https://github.com/discordjs/builders/blob/main/docs/examples/Slash%20Command%20Builders.md
  */
+/**
+ * The function called during command execution.
+ *
+ * @callback Handler
+ * @param {CommandInteraction} interaction A Discord.js CommandInteraction object.
+ * @return {any}
+ */
 
 const { Interaction } = require('discord.js');
 const {
 	SlashCommandBuilder,
+	SlashCommandSubcommandBuilder,
+	SlashCommandSubcommandGroupBuilder,
 } = require('@discordjs/builders');
+
+/**
+ * Sets a handler function called when this command is executed.
+ *
+ * @param {Handler} handler The handler function
+ * @returns {any} instance so we can chain calls.
+ */
+function setHandler(handler) {
+	if (typeof handler !== 'function') {
+		throw new Error(`handler was ${typeof handler}, expected 'function'`);
+	}
+
+	this.handler = handler;
+	return this;
+}
+// Inject setHandler into the builder classes. Doing this instead of extending
+// the builder classes allows us to set command handlers with the standard
+// builder objects without needing to re-implement theaddSubcommand(Group)
+// functions.
+SlashCommandBuilder.prototype.setHandler = setHandler;
+SlashCommandSubcommandBuilder.prototype.setHandler = setHandler;
+SlashCommandSubcommandGroupBuilder.prototype.setHandler = setHandler;
 
 /**
  * A collection of Discord.js commands that registers itself with Discord's API
@@ -64,4 +95,6 @@ class SlashCommandRegistry {
 module.exports = {
 	SlashCommandRegistry,
 	SlashCommandBuilder,
+	SlashCommandSubcommandBuilder,
+	SlashCommandSubcommandGroupBuilder,
 };
