@@ -25,9 +25,10 @@ Coming soon!
 
 ## Dependencies
 
-This library build using the following libraries. You don't need to download
-them yourself (well, other than Node and Discord.js), but you will indirectly
-interact with them to use this library.
+This library is built using the following libraries. You will, of course, need
+Node and Discord.js, but you don't need any of the others. This library
+downloads these dependencies for you, and you interact with them through this
+library.
 
 - Node 16.6.0 (or above)
 - [discord.js 13.1.0](https://discord.js.org/#/docs/main/13.1.0/general/welcome)
@@ -43,3 +44,4 @@ This code is licensed under the
 
 Basically, you are free to use this library in your closed source projects, but
 any modifications to this library must be made open source.
+
