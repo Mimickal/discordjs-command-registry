@@ -20,7 +20,10 @@
  * @return {any}
  */
 
-const { Interaction } = require('discord.js');
+const {
+	Interaction,
+	Snowflake,
+} = require('discord.js');
 const {
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
@@ -55,8 +58,17 @@ SlashCommandSubcommandGroupBuilder.prototype.setHandler = setHandler;
  */
 class SlashCommandRegistry {
 
-	// Stores a SlashCommandBuilder and handler function together.
 	#command_map = new Map();
+
+	/**
+	 * The bot's Discord application ID.
+	 */
+	app_id = null;
+
+	/**
+	 * The bot token used to register commands with Discord's API.
+	 */
+	token = null;
 
 	/**
 	 * Accessor for the list of {@link SlashCommandBuilder} objects.
@@ -74,7 +86,7 @@ class SlashCommandRegistry {
 	 *   SlashCommandBuilder.
 	 * @throws {Error} if builder is not an instance of SlashCommandBuilder or
 	 *   a function that returns a SlashCommandBuilder.
-	 * @return {CommandRegistry} instance so we can chain calls.
+	 * @return {SlashCommandRegistry} instance so we can chain calls.
 	 */
 	addCommand(input) {
 		const builder = (typeof input === 'function')
@@ -88,6 +100,32 @@ class SlashCommandRegistry {
 		}
 
 		this.#command_map.set(builder.name, builder);
+		return this;
+	}
+
+	/**
+	 * Sets the Discord application ID. This is the ID for the Discord
+	 * application to register commands for.
+	 *
+	 * @param {Snowflake} id The Discord application ID to register commands for.
+	 * @return {SlashCommandRegistry} instance so we can chain calls.
+	 */
+	setAppId(id) {
+		this.app_id = id;
+		return this;
+	}
+
+	/**
+	 * Sets the Discord bot token for this command registry.
+	 *
+	 * @param {String} token A Discord bot token, used to register commands.
+	 * @throws {Error} if token is not a string.
+	 * @return {SlashCommandRegistry} instance so we can chain calls.
+	 */
+	setToken(token) {
+		// setToken handles validation for us
+		this.token = token;
+		this.#rest.setToken(token);
 		return this;
 	}
 }
