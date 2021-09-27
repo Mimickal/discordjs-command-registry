@@ -38,7 +38,7 @@ const {
  */
 function setHandler(handler) {
 	if (typeof handler !== 'function') {
-		throw new Error(`handler was ${typeof handler}, expected 'function'`);
+		throw new Error(`handler was '${typeof handler}', expected 'function'`);
 	}
 
 	this.handler = handler;
@@ -46,7 +46,7 @@ function setHandler(handler) {
 }
 // Inject setHandler into the builder classes. Doing this instead of extending
 // the builder classes allows us to set command handlers with the standard
-// builder objects without needing to re-implement theaddSubcommand(Group)
+// builder objects without needing to re-implement the addSubcommand(Group)
 // functions.
 SlashCommandBuilder.prototype.setHandler = setHandler;
 SlashCommandSubcommandBuilder.prototype.setHandler = setHandler;
