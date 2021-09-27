@@ -33,6 +33,7 @@ library.
 - Node 16.6.0 (or above)
 - [discord.js 13.1.0](https://discord.js.org/#/docs/main/13.1.0/general/welcome)
 - [@discordjs/builders 0.6.0](https://www.npmjs.com/package/@discordjs/builders)
+- [@discordjs/rest 0.1.0-canary.0](https://www.npmjs.com/package/@discordjs/rest)
 - [discord-api-types v9](https://www.npmjs.com/package/discord-api-types)
 
 ## License

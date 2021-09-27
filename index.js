@@ -24,6 +24,8 @@ const {
 	Interaction,
 	Snowflake,
 } = require('discord.js');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
 const {
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
@@ -59,11 +61,12 @@ SlashCommandSubcommandGroupBuilder.prototype.setHandler = setHandler;
 class SlashCommandRegistry {
 
 	#command_map = new Map();
+	#rest = null;
 
 	/**
 	 * The bot's Discord application ID.
 	 */
-	app_id = null;
+	application_id = null;
 
 	/**
 	 * The bot token used to register commands with Discord's API.
@@ -75,6 +78,13 @@ class SlashCommandRegistry {
 	 */
 	get commands() {
 		return Array.from(this.#command_map.values());
+	}
+
+	/**
+	 * Creates a new {@link SlashCommandRegistry}.
+	 */
+	constructor() {
+		this.#rest = new REST({ version: '9' });
 	}
 
 	/**
@@ -110,8 +120,8 @@ class SlashCommandRegistry {
 	 * @param {Snowflake} id The Discord application ID to register commands for.
 	 * @return {SlashCommandRegistry} instance so we can chain calls.
 	 */
-	setAppId(id) {
-		this.app_id = id;
+	setApplicationId(id) {
+		this.application_id = id;
 		return this;
 	}
 
@@ -144,6 +154,50 @@ class SlashCommandRegistry {
 		return this.commands
 			.filter(cmd => should_add_cmd.get(cmd.name))
 			.map(cmd => cmd.toJSON());
+	}
+
+	/**
+	 * Registers known commands with Discord's API via an HTTP call.
+	 *
+	 * @param {Object} options Optional parameters for this function.
+	 * - {@link Snowflake} `application_id` - A Discord application ID. If
+	 *     specified, this ID will override the one specified via
+	 *     {@link SlashCommandRegistry.setAppId} for this call.
+	 * - {@link String[]} `commands` - An array of command names. When specified,
+	 *     only these commands will be registered with the API. This can be
+	 *     useful for only registering new commands. If omitted, all commands
+	 *     are registered.
+	 * - {@link Snowflake} `guild` - A Discord Guild ID. If provided, commands
+	 *     will be registered for a specific guild instead of globally. This can
+	 *     be useful for testing commands.
+	 * - {@link String} `token` - A Discord bot token. If specified, this token
+	 *     will override the one specified via
+	 *     {@link SlashCommandRegistry.setToken} for this call.
+	 * @return {Promise} Fulfills based on the Discord API call.
+	 * @resolve {@link JSON} Response body returned from Discord's API.
+	 * @reject {@link DiscordAPIError} containing the Discord API error.
+	 *     **NOTE**: This is the `DiscordAPIError` from the `@discordjs/rest`
+	 *     package, *not* the `discord.js` package.
+	 */
+	async registerCommands(options) {
+		options = options || {};
+
+		if (options.token) {
+			this.#rest.setToken(options.token);
+		}
+
+		try {
+			const app_id = options.application_id || this.application_id;
+			return await this.#rest.put(
+				options.guild
+					? Routes.applicationGuildCommands(app_id, options.guild)
+					: Routes.applicationCommands(app_id),
+				{ body: this.toJSON(options.commands) },
+			);
+		} finally {
+			// So we only use provided token for one request
+			this.#rest.setToken(this.token);
+		}
 	}
 }
 
