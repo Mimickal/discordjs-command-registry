@@ -128,6 +128,23 @@ class SlashCommandRegistry {
 		this.#rest.setToken(token);
 		return this;
 	}
+
+	/**
+	 * Returns an array of command builder JSON that can be sent to Discord's API.
+	 *
+	 * @param {String[]} commands Optional array of command names. If provided,
+	 *     only a subset of the command builders will be serialized.
+	 * @return {JSON[]} Array of command builder JSON.
+	 */
+	toJSON(commands) {
+		const should_add_cmd = commands
+			? new Map(commands.map(name => [name, true]))
+			: this.#command_map; // Also a map of name -> truthy value
+
+		return this.commands
+			.filter(cmd => should_add_cmd.get(cmd.name))
+			.map(cmd => cmd.toJSON());
+	}
 }
 
 module.exports = {

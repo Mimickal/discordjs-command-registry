@@ -62,3 +62,50 @@ describe('SlashCommandRegistry addCommand()', function() {
 	});
 });
 
+describe('SlashCommandRegistry toJSON()', function() {
+
+	before(function() {
+		this.registry = new SlashCommandRegistry()
+			.addCommand(builder => builder
+				.setName('test1')
+				.setDescription('test description 1')
+			)
+			.addCommand(builder => builder
+				.setName('test2')
+				.setDescription('test description 2')
+			)
+			.addCommand(builder => builder
+				.setName('test3')
+				.setDescription('test description 3')
+			);
+		this.expected = [
+			{
+				name: 'test1',
+				description: 'test description 1',
+				options: [],
+				default_permission: undefined,
+			},
+			{
+				name: 'test2',
+				description: 'test description 2',
+				options: [],
+				default_permission: undefined,
+			},
+			{
+				name: 'test3',
+				description: 'test description 3',
+				options: [],
+				default_permission: undefined,
+			}
+		];
+	});
+
+	it('Serialize all', function() {
+		expect(this.registry.toJSON()).to.deep.equal(this.expected);
+	});
+
+	it('Serialize subset', function() {
+		expect(this.registry.toJSON(['test1', 'test3']))
+			.to.deep.equal([ this.expected[0], this.expected[2] ]);
+	});
+});
