@@ -4,7 +4,8 @@
   "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
   "main": "index.js",
   "scripts": {
-    "test": "nyc --reporter=text mocha test.js"
+    "test": "mocha test.js",
+    "test:coverage": "nyc --reporter=text mocha test.js"
   },
   "homepage": "https://github.com/Mimickal/discordjs-command-registry#readme",
   "repository": {
