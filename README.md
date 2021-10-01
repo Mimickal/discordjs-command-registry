@@ -21,7 +21,137 @@ This library simplifies this process by letting you do this all in one place.
 
 ## Usage
 
-Coming soon!
+### Defining commands with the `SlashCommandRegistry`
+
+This library adds a new builder `SlashCommandRegistry` that serves as the
+entry point for defining all of your commands. Existing builders from
+[@discordjs/builders](https://www.npmjs.com/package/@discordjs/builders)
+still work as you expect, but there's a new function added to all of them:
+`.setHandler(handler)`. The handler is a callback function that expects a
+Discord.js `Interaction` instance. The `SlashCommandRegistry` will figure out
+which handler to call based on the received `Interaction`.
+
+```js
+const {
+    SlashCommandRegistry,
+    // Can also import these directly, but you don't need them
+    // SlashCommandBuilder,
+    // SlashCommandSubcommandBuilder,
+    // SlashCommandSubcommandGroupBuilder,
+} = require('discord-command-registry');
+
+const commands = new SlashCommandRegistry()
+    .addDefaultHandler(interaction => interaction.reply("I can't do this yet"))
+    .addCommand(command => command
+        .setName('ping')
+        .setDescription('Ping pong command')
+        .setHandler(interaction => interaction.reply('pong'))
+    )
+    .addCommand(command => command
+        .setName('info')
+        .setDescription('Gets some info on something')
+        .addSubCommand(sub => sub
+            .setName('all')
+            .setDescription('Gets all the info ever created')
+            .setHandler(interaction => interaction.reply('All things'))
+        )
+        .addSubcommand(sub => sub
+            .setname('user')
+            .setDescription('Gets info for a user')
+            .addUserOption(opt => opt
+                .setName('user')
+                .setDescription('The user whose info to list')
+                .setHandler(interaction => interaction.reply('User info'))
+            )
+        )
+    );
+```
+
+### Registering commands with Discord
+
+The `SlashCommandRegistry` can register commands with Discord's API with a
+single function call.
+
+```js
+commands.registerCommands({
+    application_id: 'your bot client ID',
+    token: 'your bot token here'
+    guild 'a guild ID', // If provided, commands are registered for this guild.
+                        // If omitted, commands are registered globally.
+})
+.then(res => console.log('Successfully registered', res))
+.catch(err => console.error('Something went wrong', err));
+```
+
+Ok cool, but what if you need more control? You also can restrict this to
+register only a subset of commands.
+
+```js
+await commands.registerCommands({
+    application_id: 'your bot client ID',
+    token: 'your bot token here',
+    commands: ['ping'],
+});
+await commands.registerCommands({
+    application_id: 'your bot client ID,
+    token: 'your bot token here',
+    guild: 'some guild ID',
+    commands: ['info']
+});
+```
+
+You can also store the `application_id` and `token` in the registry to avoid
+repeating it:
+
+```js
+commands
+    .setApplicationID('your bot client ID')
+    .setToken('your bot token here');
+
+commands.registerCommands({ commands: ['ping'] });
+```
+
+### Executing commands
+
+You can pipe Discord.js interaction events directly into a
+`SlashCommandRegistry`'s `execute()` method.
+
+```js
+const Discord = require('discord.js');
+const { SlashCommandRegistry } = require('discord-command-registry');
+
+const client = new Discord.Client({...});
+const commands = new SlashCommandRegistry();
+// Additional setup omitted for brevity...
+
+client.on(Discord.Constants.Events.INTERACTION_CREATE, (interaction) => {
+    commands.execute(interaction)
+        .then(result => console.log('Command returned this', result))
+        .catch(err => console.error('Command failed', err));
+});
+```
+
+This library does not do anything with the `Interaction` object other than route
+it to the appropriate handler function. It's up to you to extract relevant data
+(such as options) from the `Interaction`.
+
+### Which handler gets called?
+
+I added a handler to a subcommand, the group that subcommand belongs to, the
+command that group belongs to, and to the registry itself. Which one actually
+gets used when I execute an interaction?
+
+The `SlashCommandRegistry` picks the **most specific** handler it can find,
+according to this priority list:
+
+1. Subcommand
+1. Subcommand Group
+1. Top-level Command
+1. Registry's default
+
+In other words, if your command and subcommand both have a handler, only the
+subcommand's handler will be called. Using a lower-priority handler can give you
+some flexibility if you have many commands that all use similar code.
 
 ## Dependencies
 
