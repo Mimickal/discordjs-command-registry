@@ -9,8 +9,8 @@
  ******************************************************************************/
 
 /**
- * @external SlashCommandBuilder
- * @see https://github.com/discordjs/builders/blob/main/docs/examples/Slash%20Command%20Builders.md
+ * @external CommandInteraction
+ * @see https://discord.js.org/#/docs/main/stable/class/CommandInteraction
  */
 /**
  * The function called during command execution.
@@ -67,6 +67,11 @@ class SlashCommandRegistry {
 	 * The bot's Discord application ID.
 	 */
 	application_id = null;
+
+	/**
+	 * The handler run for unrecognized commands.
+	 */
+	default_handler = null;
 
 	/**
 	 * The bot token used to register commands with Discord's API.
@@ -126,6 +131,22 @@ class SlashCommandRegistry {
 	}
 
 	/**
+	 * Sets up a function to run for unrecognized commands.
+	 *
+	 * @param {Handler} handler The function to execute for unrecognized commands.
+	 * @throws {Error} if handler is not a function.
+	 * @return {CommandRegistry} instance so we can chain calls.
+	 */
+	setDefaultHandler(handler) {
+		if (typeof handler !== 'function') {
+			throw new Error(`handler was '${typeof handler}', expected 'function'`);
+		}
+
+		this.default_handler = handler;
+		return this;
+	}
+
+	/**
 	 * Sets the Discord bot token for this command registry.
 	 *
 	 * @param {String} token A Discord bot token, used to register commands.
@@ -154,6 +175,84 @@ class SlashCommandRegistry {
 		return this.commands
 			.filter(cmd => should_add_cmd.get(cmd.name))
 			.map(cmd => cmd.toJSON());
+	}
+
+	/**
+	 * Attempts to execute the given Discord.js CommandInteraction using the
+	 * most specific command handler provided. For example, if an individual
+	 * subcommand does not have a handler but the parent command does, the
+	 * parent's handler will be called. If no command matches the interaction,
+	 * the default handler is called if provided.
+	 *
+	 * This function is a no-op if:
+	 * - The interaction is not a {@link CommandInteraction}.
+	 * - No command matches the interaction and no default handler is set.
+	 *
+	 * This function is set up so it can be directly used as the handler for
+	 * Discord.js' `interactionCreate` event (but you may consider a thin wrapper
+	 * for logging).
+	 *
+	 * @param {CommandInteraction} interaction A Discord.js CommandInteraction object.
+	 * @return {Promise} Fulfills based on command execution.
+	 * @resolve The value returned from the {@link Handler}.
+	 * @reject
+	 * - Received interaction does not match a command builder. This will
+	 *   usually happen if a bot's command definitions are changed without
+	 *   updating the bot application with Discord's API.
+	 * - Any Error that occurs during handler execution.
+	 */
+	async execute(interaction) {
+		// TODO maybe allow "non-strict" interaction matching?
+		if (!(interaction instanceof Interaction)) {
+			throw new Error('given value was not a Discord.js Interaction');
+		}
+
+		if (!interaction.isCommand()) {
+			return;
+		}
+
+		const cmd_name  = interaction.commandName;
+		const cmd_group = interaction.options.getSubcommandGroup(false);
+		const cmd_sub   = interaction.options.getSubcommand(false);
+
+		// Find the most specific command handler for this CommandInteraction.
+		// Drill down matching valid structures here:
+		// https://canary.discord.com/developers/docs/interactions/slash-commands#nested-subcommands-and-groups
+		const builder_cmd = this.#command_map.get(cmd_name);
+		if (!builder_cmd) {
+			throw builderErr(interaction, 'command');
+		}
+
+		let builder_group;
+		if (cmd_group) {
+			builder_group = builder_cmd.options.find(b =>
+				b instanceof SlashCommandSubcommandGroupBuilder &&
+				b.name === cmd_group
+			);
+			if (!builder_group) {
+				throw builderErr(interaction, 'group');
+			}
+		}
+
+		let builder_sub;
+		if (cmd_sub) {
+			// See above linked Discord docs on valid command structure.
+			builder_sub = (builder_group || builder_cmd).options.find(b =>
+				b instanceof SlashCommandSubcommandBuilder &&
+				b.name === cmd_sub
+			);
+			if (!builder_sub) {
+				throw builderErr(interaction, 'subcommand');
+			}
+		}
+
+		const handler =
+			builder_sub?.handler   ??
+			builder_group?.handler ??
+			builder_cmd.handler    ??
+			this.default_handler;
+
+		return handler?.(interaction);
 	}
 
 	/**
@@ -199,6 +298,17 @@ class SlashCommandRegistry {
 			this.#rest.setToken(this.token);
 		}
 	}
+}
+
+// Makes an Error describing a mismatched Discord.js CommandInteraction.
+function builderErr(interaction, part) {
+	return new Error(
+		`No known command matches the following (mismatch starts at '${part}')\n` +
+		`\tcommand:    ${interaction.commandName}\n` +
+		`\tgroup:      ${interaction.options.getSubcommandGroup(false) ?? '<none>'}\n` +
+		`\tsubcommand: ${interaction.options.getSubcommand(false) ?? '<none>'}\n` +
+		'You may need to update your commands with the Discord API.'
+	);
 }
 
 module.exports = {

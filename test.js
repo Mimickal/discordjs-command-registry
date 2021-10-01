@@ -2,13 +2,17 @@ const expect = require('chai').expect;
 const nock = require('nock');
 const { DiscordAPIError } = require('@discordjs/rest');
 const {
+	Client,
+	Interaction,
+} = require('discord.js');
+const {
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
- } = require('.');
+} = require('.');
 
-describe('Command builders have handler functions injected', function() {
+describe('Builders have setHandler() functions injected', function() {
 	Array.of(
 		SlashCommandBuilder,
 		SlashCommandSubcommandBuilder,
@@ -186,6 +190,231 @@ describe('SlashCommandRegistry registerCommands()', function() {
 			.catch(err => {
 				expect(err).to.be.instanceOf(DiscordAPIError);
 				expect(err.message).to.equal('Unknown Error');
+			});
+	});
+});
+
+// A crappy mock interaction for testing that satisfies an instanceof check
+// without any of the actual safety checks.
+class MockCommandInteraction extends Interaction {
+	constructor(args) {
+		const client = new Client({ intents: [] });
+		super(client, {
+			type: 1,
+			user: {}
+		});
+
+		this.is_command = args.is_command ?? true;
+		this.commandName = args.name;
+		this.options = {
+			getSubcommandGroup: function(toggle) {
+				if (toggle ?? true) throw Error('Bad');
+				return args.group;
+			},
+			getSubcommand: function(toggle) {
+				if (toggle ?? true) throw Error('Bad');
+				return args.subcommand;
+			}
+		};
+	}
+	isCommand() {
+		return this.is_command;
+	}
+}
+
+describe('SlashCommandRegistry execute()', function() {
+
+	beforeEach(function() {
+		this.registry = new SlashCommandRegistry()
+			.addCommand(command => command
+				.setName('cmd1')
+				.setDescription('Command with direct subcommands')
+				.addSubcommand(sub => sub
+					.setName('subcmd1')
+					.setDescription('Direct subcommand 1')
+				)
+				.addSubcommand(sub => sub
+					.setName('subcmd2')
+					.setDescription('Direct subcommand 2')
+				)
+			)
+			.addCommand(command => command
+				.setName('cmd2')
+				.setDescription('Command with subcommand group')
+				.addSubcommandGroup(group => group
+					.setName('group1')
+					.setDescription('Subcommand group 1')
+					.addSubcommand(sub => sub
+						.setName('subcmd1')
+						.setDescription('subcommand in group 1')
+					)
+					.addSubcommand(sub => sub
+						.setName('subcmd2')
+						.setDescription('subcommand in group 2')
+					)
+				)
+			)
+			.addCommand(command => command
+				.setName('cmd3')
+				.setDescription('Top-level command only')
+			);
+
+		this.interaction = new MockCommandInteraction({
+			name: 'cmd2',
+			group: 'group1',
+			subcommand: 'subcmd1',
+		});
+	});
+
+	it('Error for setDefaultHandler() non-function values', function() {
+		expect(() => this.registry.setDefaultHandler({})).to.throw(
+			Error, "handler was 'object', expected 'function'"
+		);
+	});
+
+	it('Handler priority 5: no-op if no handler set anywhere', function() {
+		return this.registry.execute(this.interaction)
+			.then(val => expect(val).to.be.undefined);
+	});
+
+	it('Handler priority 4: default handler', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => expected);
+
+		return this.registry.execute(this.interaction)
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Handler priority 3: top-level command handler', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => 'default handler called');
+		this.registry.commands[1].setHandler(() => expected);
+
+		return this.registry.execute(this.interaction)
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Handler priority 3: top-level command handler (only command)', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => 'default handler called');
+		this.registry.commands[2].setHandler(() => expected);
+
+		return this.registry.execute(new MockCommandInteraction({
+			name: 'cmd3',
+		}))
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Handler priority 2: subcommand group handler', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => 'default handler called');
+		this.registry.commands[1].setHandler(() => 'top-level handler');
+		this.registry.commands[1].options[0].setHandler(() => expected);
+
+		return this.registry.execute(this.interaction)
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Handler priority 1: subcommand handler', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => 'default handler called');
+		this.registry.commands[1].setHandler(() => 'top-level handler');
+		this.registry.commands[1].options[0].setHandler(() => 'group handler');
+		this.registry.commands[1].options[0].options[0].setHandler(() => expected);
+
+		return this.registry.execute(this.interaction)
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Handler priority 1: subcommand handler (direct subcommand)', function() {
+		const expected = 'Should see this';
+		this.registry.setDefaultHandler(() => 'default handler called');
+		this.registry.commands[0].setHandler(() => 'top-level handler');
+		this.registry.commands[0].options[0].setHandler(() => expected);
+
+		return this.registry.execute(new MockCommandInteraction({
+			name: 'cmd1',
+			subcommand: 'subcmd1',
+		}))
+			.then(val => expect(val).to.equal(expected));
+	});
+
+	it('Error on non-interaction value', function() {
+		return this.registry.execute({})
+			.then(() => expect.fail('Expected exception but got none'))
+			.catch(err => {
+				expect(err).to.be.instanceOf(Error);
+				expect(err.message).to.equal('given value was not a Discord.js Interaction');
+			});
+	});
+
+	it('No-op on non-CommandInteraction value', function() {
+		this.registry.setDefaultHandler(() => 'default handler called');
+		return this.registry.execute(new MockCommandInteraction({
+			is_command: false,
+		})).then(val => expect(val).to.be.undefined);
+	});
+
+	it('Error on missing command', function() {
+		return this.registry.execute(new MockCommandInteraction({
+			name: 'bad',
+		}))
+			.then(() => expect.fail('Expected exception but got none'))
+			.catch(err => {
+				expect(err).to.be.instanceOf(Error);
+				expect(err.message).to.contain(
+					"No known command matches the following (mismatch starts at 'command')\n" +
+					"	command:    bad\n" +
+					"	group:      <none>\n" +
+					"	subcommand: <none>\n"
+				);
+			});
+	});
+
+	it('Error on missing group', function() {
+		return this.registry.execute(new MockCommandInteraction({
+			name: 'cmd1',
+			group: 'bad',
+		}))
+			.then(() => expect.fail('Expected exception but got none'))
+			.catch(err => {
+				expect(err).to.be.instanceOf(Error);
+				expect(err.message).to.contain(
+					"No known command matches the following (mismatch starts at 'group')\n" +
+					"	command:    cmd1\n" +
+					"	group:      bad\n" +
+					"	subcommand: <none>\n"
+				);
+			});
+	});
+
+	it('Error on missing subcommand', function() {
+		return this.registry.execute(new MockCommandInteraction({
+			name: 'cmd2',
+			group: 'group1',
+			subcommand: 'bad',
+		}))
+			.then(() => expect.fail('Expected exception but got none'))
+			.catch(err => {
+				expect(err).to.be.instanceOf(Error);
+				expect(err.message).to.contain(
+					"No known command matches the following (mismatch starts at 'subcommand')\n" +
+					"	command:    cmd2\n" +
+					"	group:      group1\n" +
+					"	subcommand: bad\n"
+				);
+			});
+	});
+
+	it('Gracefully handles error thrown in handler', function() {
+		const expected = 'I was thrown from the handler';
+		this.registry.setDefaultHandler(() => { throw new Error(expected) });
+
+		return this.registry.execute(this.interaction)
+			.then(() => expect.fail('Expected exception but got none'))
+			.catch(err => {
+				expect(err).to.be.instanceOf(Error);
+				expect(err.message).to.equal(expected);
 			});
 	});
 });
