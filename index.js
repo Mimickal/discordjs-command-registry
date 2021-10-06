@@ -194,7 +194,7 @@ class SlashCommandRegistry {
 	 * for logging).
 	 *
 	 * @param {CommandInteraction} interaction A Discord.js CommandInteraction object.
-	 * @return {Promise} Fulfills based on command execution.
+	 * @return {Promise<*>} Fulfills based on command execution.
 	 * @resolve The value returned from the {@link Handler}.
 	 * @reject
 	 * - Received interaction does not match a command builder. This will
@@ -273,7 +273,7 @@ class SlashCommandRegistry {
 	 * - {@link String} `token` - A Discord bot token. If specified, this token
 	 *     will override the one specified via
 	 *     {@link SlashCommandRegistry.setToken} for this call.
-	 * @return {Promise} Fulfills based on the Discord API call.
+	 * @return {Promise<JSON>} Fulfills based on the Discord API call.
 	 * @resolve {@link JSON} Response body returned from Discord's API.
 	 * @reject {@link DiscordAPIError} containing the Discord API error.
 	 *     **NOTE**: This is the `DiscordAPIError` from the `@discordjs/rest`
