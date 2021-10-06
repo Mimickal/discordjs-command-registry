@@ -21,6 +21,7 @@
  */
 
 const {
+	Application,
 	Interaction,
 	Snowflake,
 } = require('discord.js');
@@ -300,6 +301,31 @@ class SlashCommandRegistry {
 	}
 }
 
+/**
+ * Resolves a string interaction option into an Application object.
+ * Neither Discord.js nor Discord's own API support application options in
+ * commands, so we need to use a builder's `.addStringOption(...)` function
+ * instead.
+ *
+ * **NOTE**: This depends on an undocumented API endpoint. This could break if
+ * this endpoint changes.
+ * `/applications/{application.id}/rpc`
+ *
+ * @param {CommandInteraction} interaction A Discord.js interaction containing a
+ *   string option containing an application's ID.
+ * @param {String} opt_name The option containing the application's ID.
+ * @return {Promise<Application>} Fulfills based on the Discord API call.
+ * @resolve {@link Application} The resolved Application object.
+ * @reject Any error from the Discord API, e.g. invalid application ID.
+ */
+function getApplication(interaction, opt_name) {
+	const app_id = interaction.options.getString(opt_name);
+	return new REST({ version: '9' })
+		.setToken('ignored')
+		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
+		.then(data => new Application(interaction.client, data))
+}
+
 // Makes an Error describing a mismatched Discord.js CommandInteraction.
 function builderErr(interaction, part) {
 	return new Error(
@@ -312,6 +338,9 @@ function builderErr(interaction, part) {
 }
 
 module.exports = {
+	Options: Object.freeze({
+		getApplication,
+	}),
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,

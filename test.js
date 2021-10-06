@@ -11,10 +11,12 @@ const expect = require('chai').expect;
 const nock = require('nock');
 const { DiscordAPIError } = require('@discordjs/rest');
 const {
+	Application,
 	Client,
 	Interaction,
 } = require('discord.js');
 const {
+	Options,
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
@@ -216,14 +218,18 @@ class MockCommandInteraction extends Interaction {
 		this.is_command = args.is_command ?? true;
 		this.commandName = args.name;
 		this.options = {
-			getSubcommandGroup: function(toggle) {
-				if (toggle ?? true) throw Error('Bad');
+			getSubcommandGroup: function(throw_toggle) {
+				if (throw_toggle ?? true) throw Error('Bad');
 				return args.group;
 			},
-			getSubcommand: function(toggle) {
-				if (toggle ?? true) throw Error('Bad');
+			getSubcommand: function(throw_toggle) {
+				if (throw_toggle ?? true) throw Error('Bad');
 				return args.subcommand;
-			}
+			},
+			getString: function(name, throw_toggle) {
+				if (throw_toggle) throw Error('bad');
+				return args.string_opts[name];
+			},
 		};
 	}
 	isCommand() {
@@ -425,5 +431,33 @@ describe('SlashCommandRegistry execute()', function() {
 				expect(err).to.be.instanceOf(Error);
 				expect(err.message).to.equal(expected);
 			});
+	});
+});
+
+describe('Option resolvers', function() {
+
+	it('getApplication()', function() {
+		const test_opt_name = 'app_id';
+		const test_app_id = '12345';
+		const test_app_name = 'cool thing';
+
+		const scope_guard = nock('https://discord.com')
+			.get(`/api/v9/applications/${test_app_id}/rpc`)
+			.reply(200, {
+				id: test_app_id,
+				name: test_app_name,
+				icon: 'testhashthinghere',
+			});
+
+		const interaction = new MockCommandInteraction({
+			name: 'test',
+			string_opts: { [test_opt_name]: test_app_id },
+		});
+
+		return Options.getApplication(interaction, test_opt_name).then(app => {
+			expect(app).to.be.instanceOf(Application);
+			expect(app.id).to.equal(test_app_id);
+			expect(app.name).to.equal(test_app_name);
+		});
 	});
 });
