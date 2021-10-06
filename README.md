@@ -19,6 +19,9 @@ which still requires you to write your own router and juggle your own handlers
 
 This library simplifies this process by letting you do this all in one place.
 
+It also provides some bridging functionality to support additional option types:
+- Application
+
 ## Usage
 
 ### Defining commands with the `SlashCommandRegistry`
@@ -152,6 +155,40 @@ according to this priority list:
 In other words, if your command and subcommand both have a handler, only the
 subcommand's handler will be called. Using a lower-priority handler can give you
 some flexibility if you have many commands that all use similar code.
+
+### Additional option types
+
+Discord (and Discord.js) does not currently support command options for things
+like Applications. This library provides functions to approximate these
+additional option types:
+
+- `getApplication(interaction, option_name)`
+
+For example, this is a functional example of an Application option:
+
+```js
+const {
+    Options,
+    SlashCommandRegistry,
+} = require('discord-command-registry');
+
+const commands = new SlashCommandRegistry()
+    .addCommand(command => command
+        .addName('mycmd')
+        .addDescription('Example command that has an application option')
+        // Add your application option as a string option
+        .addStringOption(option => option
+            .setName('app')
+            .setDescription('An application ID')
+        )
+        .setHandler(async (interaction) => {
+            // Use this function to resolve that string option into an application.
+            // NOTE this makes an HTTP call and so returns a promise.
+            const app = await Options.getApplication(interaction, 'app');
+            return interaction.reply(`Application name: ${app.name}`);
+        });
+    );
+```
 
 ## Dependencies
 
