@@ -111,7 +111,7 @@ class SlashCommandRegistry {
 
 		if (!(builder instanceof SlashCommandBuilder)) {
 			throw new Error(
-				`input did not resolve to a ${SlashCommandBuilder.name}. Got ${builder}`
+				`input did not resolve to a SlashCommandBuilder. Got ${builder}`
 			);
 		}
 
