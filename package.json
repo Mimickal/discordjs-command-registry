@@ -7,7 +7,7 @@
     "test": "mocha test.js",
     "test:coverage": "nyc --reporter=text mocha test.js"
   },
-  "homepage": "https://github.com/Mimickal/discordjs-command-registry#readme",
+  "homepage": "https://www.npmjs.com/package/discord-command-registry",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Mimickal/discordjs-command-registry.git"
