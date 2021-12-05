@@ -78,9 +78,9 @@ single function call.
 ```js
 commands.registerCommands({
     application_id: 'your bot client ID',
-    token: 'your bot token here'
-    guild 'a guild ID', // If provided, commands are registered for this guild.
-                        // If omitted, commands are registered globally.
+    token: 'your bot token here',
+    guild: 'a guild ID', // If provided, commands are registered for this guild.
+                         // If omitted, commands are registered globally.
 })
 .then(res => console.log('Successfully registered', res))
 .catch(err => console.error('Something went wrong', err));
@@ -96,7 +96,7 @@ await commands.registerCommands({
     commands: ['ping'],
 });
 await commands.registerCommands({
-    application_id: 'your bot client ID,
+    application_id: 'your bot client ID',
     token: 'your bot token here',
     guild: 'some guild ID',
     commands: ['info']
