@@ -36,8 +36,10 @@ which handler to call based on the received `Interaction`.
 
 ```js
 const {
+    ApplicationCommandType,
     SlashCommandRegistry,
     // Can also import these directly, but you don't need them
+    // ContextMenuCommandBuilder,
     // SlashCommandBuilder,
     // SlashCommandSubcommandBuilder,
     // SlashCommandSubcommandGroupBuilder,
@@ -67,6 +69,11 @@ const commands = new SlashCommandRegistry()
                 .setHandler(interaction => interaction.reply('User info'))
             )
         )
+    )
+    .addContextMenuCommand(command => command
+        .setName('select')
+        .setType(ApplicationCommandType.Message)
+        .setHandler(interaction => interaction.reply('selected a message'))
     );
 ```
 
