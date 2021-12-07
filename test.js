@@ -21,6 +21,10 @@ const {
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
+	spoiler,
+	hyperlink,
+	inlineCode,
+	time,
 } = require('.');
 
 describe('Builders have setHandler() functions injected', function() {
@@ -459,5 +463,27 @@ describe('Option resolvers', function() {
 			expect(app.id).to.equal(test_app_id);
 			expect(app.name).to.equal(test_app_name);
 		});
+	});
+});
+
+describe('Utils forwarded', function() {
+
+	it('spoiler', function() {
+		expect(spoiler('this thing')).to.equal('||this thing||');
+	});
+
+	it('hyperlink', function() {
+		expect(hyperlink('this thing', 'www.test.com')).to.equal(
+			'[this thing](www.test.com)'
+		);
+	});
+
+	it('inlineCode', function() {
+		expect(inlineCode('this thing')).to.equal('`this thing`');
+	});
+
+	it('time', function() {
+		const now = Date.now();
+		expect(time(now)).to.equal(`<t:${now.valueOf()}>`);
 	});
 });

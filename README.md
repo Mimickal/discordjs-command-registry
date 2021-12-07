@@ -190,6 +190,17 @@ const commands = new SlashCommandRegistry()
     );
 ```
 
+## Other stuff from `@discordjs/builders`
+
+The Discord.js builders package [has a lot of neat
+helper functions](https://discordjs.guide/popular-topics/builders.html). The
+command registry passes all of these functions through, so they can be included
+directly (preventing the need to add / import `@discordjs/builders`).
+
+```js
+const { bold, hyperlink, time } = require('discord-command-registry');
+```
+
 ## Dependencies
 
 This library is built using the following libraries. You will, of course, need
