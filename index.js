@@ -26,8 +26,12 @@ const {
 	Snowflake,
 } = require('discord.js');
 const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
 const {
+	ApplicationCommandType,
+	Routes,
+} = require('discord-api-types/v9');
+const {
+	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
@@ -51,6 +55,7 @@ function setHandler(handler) {
 // the builder classes allows us to set command handlers with the standard
 // builder objects without needing to re-implement the addSubcommand(Group)
 // functions.
+ContextMenuCommandBuilder.prototype.setHandler = setHandler;
 SlashCommandBuilder.prototype.setHandler = setHandler;
 SlashCommandSubcommandBuilder.prototype.setHandler = setHandler;
 SlashCommandSubcommandGroupBuilder.prototype.setHandler = setHandler;
@@ -120,6 +125,32 @@ class SlashCommandRegistry {
 	}
 
 	/**
+	 * Defines a new context menu command from a builder.
+	 * Commands defined here can also be registered with Discord's API.
+	 *
+	 * @param {ContextMenuCommandBuilder|Function<ContextMenuCommandBuilder>} input
+	 *   Either a ContextMenuCommandBuilder or a function that returns a
+	 *   ContextMenuCommandBuilder.
+	 * @throws {Error} if builder is not an instance of ContextMenuCommandBuilder
+	 *   or a function that returns a ContextMenuCommandBuilder.
+	 * @returns {SlashCommandRegistry} instance so we can chain calls.
+	 */
+	addContextMenuCommand(input) {
+		const builder = (typeof input === 'function')
+			? input(new ContextMenuCommandBuilder())
+			: input;
+
+		if (!(builder instanceof ContextMenuCommandBuilder)) {
+			throw new Error(
+				`input did not resolve to a ContextMenuCommandBuilder. Got ${builder}`
+			);
+		}
+
+		this.#command_map.set(builder.name, builder);
+		return this;
+	}
+
+	/**
 	 * Sets the Discord application ID. This is the ID for the Discord
 	 * application to register commands for.
 	 *
@@ -179,21 +210,24 @@ class SlashCommandRegistry {
 	}
 
 	/**
-	 * Attempts to execute the given Discord.js CommandInteraction using the
-	 * most specific command handler provided. For example, if an individual
-	 * subcommand does not have a handler but the parent command does, the
-	 * parent's handler will be called. If no command matches the interaction,
-	 * the default handler is called if provided.
+	 * Attempts to execute the given Discord.js Interaction using the most
+	 * specific handler provided. For example, if an individual subcommand does
+	 * not have a handler but the parent command does, the parent's handler will
+	 * be called. If no builder matches the interaction, the default handler is
+	 * called (if provided).
 	 *
 	 * This function is a no-op if:
-	 * - The interaction is not a {@link CommandInteraction}.
-	 * - No command matches the interaction and no default handler is set.
+	 * - The interaction is not a supported {@link Interaction} type. We
+	 *   currently support:
+	 *     - {@link CommandInteraction}
+	 *     - {@link ContextMenuInteraction}
+	 * - No builder matches the interaction and no default handler is set.
 	 *
 	 * This function is set up so it can be directly used as the handler for
 	 * Discord.js' `interactionCreate` event (but you may consider a thin wrapper
 	 * for logging).
 	 *
-	 * @param {CommandInteraction} interaction A Discord.js CommandInteraction object.
+	 * @param {Interaction} interaction A Discord.js Interaction object.
 	 * @return {Promise<*>} Fulfills based on command execution.
 	 * @resolve The value returned from the {@link Handler}.
 	 * @reject
@@ -208,7 +242,7 @@ class SlashCommandRegistry {
 			throw new Error('given value was not a Discord.js Interaction');
 		}
 
-		if (!interaction.isCommand()) {
+		if (!interaction.isCommand() && !interaction.isContextMenu()) {
 			return;
 		}
 
@@ -342,6 +376,7 @@ module.exports = {
 		getApplication,
 	}),
 	...require('@discordjs/builders'), // Forward utils and stuff
+	ApplicationCommandType, // For context menu builder
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,

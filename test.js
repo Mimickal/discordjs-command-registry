@@ -16,6 +16,7 @@ const {
 	Interaction,
 } = require('discord.js');
 const {
+	ContextMenuCommandBuilder,
 	Options,
 	SlashCommandRegistry,
 	SlashCommandBuilder,
@@ -80,6 +81,41 @@ describe('SlashCommandRegistry addCommand()', function() {
 		expect(() => this.registry.addCommand(builder => 'thing')).to.throw(
 			Error, 'input did not resolve to a SlashCommandBuilder. Got thing'
 		);
+	});
+});
+
+describe('SlashCommandRegistry addContextMenuCommand()', function() {
+
+	beforeEach(function() {
+		this.registry = new SlashCommandRegistry();
+	});
+
+	it('Add builder instance', function() {
+		const builder = new ContextMenuCommandBuilder();
+		expect(() => this.registry.addContextMenuCommand(builder)).to.not.throw();
+		expect(this.registry.commands).to.include(builder);
+	});
+
+	it('value must be a builder', function() {
+		expect(() => this.registry.addContextMenuCommand('thing')).to.throw(
+			Error, 'input did not resolve to a ContextMenuCommandBuilder. Got thing'
+		);
+	});
+
+	it('Function returns builder', function() {
+		expect(this.registry.commands).to.be.empty;
+		expect(
+			() => this.registry.addContextMenuCommand(builder => builder)
+		).to.not.throw();
+		expect(this.registry.commands).to.have.lengthOf(1);
+	});
+
+	it('Function must return a builder', function() {
+		expect(
+			() => this.registry.addContextMenuCommand(builder => 'thing')
+		).to.throw(
+			Error, 'input did not resolve to a ContextMenuCommandBuilder. Got thing'
+		)
 	});
 });
 
