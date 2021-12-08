@@ -341,6 +341,7 @@ module.exports = {
 	Options: Object.freeze({
 		getApplication,
 	}),
+	...require('@discordjs/builders'), // Forward utils and stuff
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
