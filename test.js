@@ -477,18 +477,18 @@ describe('SlashCommandRegistry execute()', function() {
 });
 
 describe('Option resolvers', function() {
+	const test_opt_name = 'test_opt';
+	function makeInteractionWithOpt(opt) {
+		return new MockCommandInteraction({
+			name: 'test',
+			string_opts: { [test_opt_name]: opt },
+		});
+	}
 
 	describe('getApplication()', function() {
-		const test_opt_name = 'app_id';
-		function makeInteractionWithAppId(app_id) {
-			return new MockCommandInteraction({
-				name: 'test',
-				string_opts: { [test_opt_name]: app_id },
-			});
-		}
 
 		it('Required but not provided', function() {
-			const interaction = makeInteractionWithAppId(undefined);
+			const interaction = makeInteractionWithOpt(undefined);
 			return Options.getApplication(interaction, test_opt_name, true)
 				.then(() => expect.fail('Expected exception but got none'))
 				.catch(err => {
@@ -507,7 +507,7 @@ describe('Option resolvers', function() {
 					name: test_app_name,
 					icon: 'testhashthinghere',
 				});
-			const interaction = makeInteractionWithAppId(test_app_id);
+			const interaction = makeInteractionWithOpt(test_app_id);
 
 			return Options.getApplication(interaction, test_opt_name).then(app => {
 				expect(app).to.be.instanceOf(Application);
@@ -518,36 +518,29 @@ describe('Option resolvers', function() {
 	});
 
 	describe('getEmoji()', function() {
-		const test_opt_name = 'emoji';
-		function makeInteractionWithEmoji(str) {
-			return new MockCommandInteraction({
-				name: 'test',
-				string_opts: { [test_opt_name]: str },
-			});
-		}
 
 		it('Required but not provided', function() {
-			const interaction = makeInteractionWithEmoji(undefined);
+			const interaction = makeInteractionWithOpt(undefined);
 			expect(
 				() => Options.getEmoji(interaction, test_opt_name, true)
 			).to.throw(TypeError, /expected a non-empty value/);
 		});
 
 		it('Optional and not provided', function() {
-			const interaction = makeInteractionWithEmoji(undefined);
+			const interaction = makeInteractionWithOpt(undefined);
 			const emoji = Options.getEmoji(interaction, test_opt_name);
 			expect(emoji).to.be.null;
 		});
 
 		it('Not an emoji string', function() {
-			const interaction = makeInteractionWithEmoji('not an emoji');
+			const interaction = makeInteractionWithOpt('not an emoji');
 			const emoji = Options.getEmoji(interaction, test_opt_name);
 			expect(emoji).to.be.null;
 		});
 
 		it('Built-in emoji string', function() {
 			const test_str = '🦊';
-			const interaction = makeInteractionWithEmoji(test_str);
+			const interaction = makeInteractionWithOpt(test_str);
 			const emoji = Options.getEmoji(interaction, test_opt_name);
 			expect(emoji).to.be.a.string;
 			expect(emoji).to.equal(test_str);
@@ -563,7 +556,7 @@ describe('Option resolvers', function() {
 			// on the fly, so we need to make a fake guild and set up all those
 			// links, too.
 			// https://github.com/discordjs/discord.js/blob/13.3.1/src/client/Client.js#L194
-			const interaction = makeInteractionWithEmoji(test_str);
+			const interaction = makeInteractionWithOpt(test_str);
 			const test_guild = new Guild(interaction.client, {
 				channels: [true], // Dumb hack.
 			});
