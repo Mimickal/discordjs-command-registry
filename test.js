@@ -13,6 +13,9 @@ const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
 	Client,
+	CommandInteractionOptionResolver,
+	Guild,
+	GuildEmoji,
 	Interaction,
 } = require('discord.js');
 const {
@@ -257,20 +260,19 @@ class MockCommandInteraction extends Interaction {
 
 		this.is_command = args.is_command ?? true;
 		this.commandName = args.name;
-		this.options = {
-			getSubcommandGroup: function(throw_toggle) {
-				if (throw_toggle ?? true) throw Error('Bad');
-				return args.group;
-			},
-			getSubcommand: function(throw_toggle) {
-				if (throw_toggle ?? true) throw Error('Bad');
-				return args.subcommand;
-			},
-			getString: function(name, throw_toggle) {
-				if (throw_toggle) throw Error('bad');
-				return args.string_opts[name];
-			},
-		};
+
+		// Closely depends on private implementations here:
+		// https://github.com/discordjs/discord.js/blob/13.3.1/src/structures/CommandInteractionOptionResolver.js
+		this.options = new CommandInteractionOptionResolver(
+			client,
+			Object.entries(args.string_opts || {}).map(([name, value]) => ({
+				type: 'STRING',
+				name: name,
+				value: value,
+			}))
+		);
+		this.options._group = args.group;
+		this.options._subcommand = args.subcommand;
 	}
 	isCommand() {
 		return this.is_command;
@@ -475,29 +477,99 @@ describe('SlashCommandRegistry execute()', function() {
 });
 
 describe('Option resolvers', function() {
-
-	it('getApplication()', function() {
-		const test_opt_name = 'app_id';
-		const test_app_id = '12345';
-		const test_app_name = 'cool thing';
-
-		const scope_guard = nock('https://discord.com')
-			.get(`/api/v9/applications/${test_app_id}/rpc`)
-			.reply(200, {
-				id: test_app_id,
-				name: test_app_name,
-				icon: 'testhashthinghere',
-			});
-
-		const interaction = new MockCommandInteraction({
+	const test_opt_name = 'test_opt';
+	function makeInteractionWithOpt(opt) {
+		return new MockCommandInteraction({
 			name: 'test',
-			string_opts: { [test_opt_name]: test_app_id },
+			string_opts: { [test_opt_name]: opt },
+		});
+	}
+
+	describe('getApplication()', function() {
+
+		it('Required but not provided', function() {
+			const interaction = makeInteractionWithOpt(undefined);
+			return Options.getApplication(interaction, test_opt_name, true)
+				.then(() => expect.fail('Expected exception but got none'))
+				.catch(err => {
+					expect(err).to.be.instanceOf(TypeError);
+					expect(err.message).to.match(/expected a non-empty value/);
+				});
 		});
 
-		return Options.getApplication(interaction, test_opt_name).then(app => {
-			expect(app).to.be.instanceOf(Application);
-			expect(app.id).to.equal(test_app_id);
-			expect(app.name).to.equal(test_app_name);
+		it('Returns a good application', function() {
+			const test_app_id = '12345';
+			const test_app_name = 'cool thing';
+			const scope_guard = nock('https://discord.com')
+				.get(`/api/v9/applications/${test_app_id}/rpc`)
+				.reply(200, {
+					id: test_app_id,
+					name: test_app_name,
+					icon: 'testhashthinghere',
+				});
+			const interaction = makeInteractionWithOpt(test_app_id);
+
+			return Options.getApplication(interaction, test_opt_name).then(app => {
+				expect(app).to.be.instanceOf(Application);
+				expect(app.id).to.equal(test_app_id);
+				expect(app.name).to.equal(test_app_name);
+			});
+		});
+	});
+
+	describe('getEmoji()', function() {
+
+		it('Required but not provided', function() {
+			const interaction = makeInteractionWithOpt(undefined);
+			expect(
+				() => Options.getEmoji(interaction, test_opt_name, true)
+			).to.throw(TypeError, /expected a non-empty value/);
+		});
+
+		it('Optional and not provided', function() {
+			const interaction = makeInteractionWithOpt(undefined);
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.null;
+		});
+
+		it('Not an emoji string', function() {
+			const interaction = makeInteractionWithOpt('not an emoji');
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.null;
+		});
+
+		it('Built-in emoji string', function() {
+			const test_str = '🦊';
+			const interaction = makeInteractionWithOpt(test_str);
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.a.string;
+			expect(emoji).to.equal(test_str);
+		});
+
+		it('Custom emoji string', function() {
+			const test_id = '884481185005326377';
+			const test_name = 'fennec_fox';
+			const test_str = `<:${test_name}:${test_id}>`;
+
+			// Need to populate the test client's cache with our test emoji.
+			// Discord.js internally aggregates the emojis of individual guilds
+			// on the fly, so we need to make a fake guild and set up all those
+			// links, too.
+			// https://github.com/discordjs/discord.js/blob/13.3.1/src/client/Client.js#L194
+			const interaction = makeInteractionWithOpt(test_str);
+			const test_guild = new Guild(interaction.client, {
+				channels: [true], // Dumb hack.
+			});
+			const test_emoji = new GuildEmoji(interaction.client,
+				{ id: test_id, name: test_name },
+				test_guild
+			);
+			test_guild.emojis.cache.set(test_id, test_emoji);
+			interaction.client.guilds.cache.set(test_guild.id, test_guild);
+
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.instanceOf(GuildEmoji)
+			expect(emoji.toString()).to.equal(test_str);
 		});
 	});
 });

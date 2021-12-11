@@ -24,6 +24,7 @@ const {
 	Application,
 	Interaction,
 	Snowflake,
+	CommandInteraction,
 } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const {
@@ -348,16 +349,51 @@ class SlashCommandRegistry {
  * @param {CommandInteraction} interaction A Discord.js interaction containing a
  *   string option containing an application's ID.
  * @param {String} opt_name The option containing the application's ID.
+ * @param {Boolean} required Whether to throw an error if the option is not
+ *   found (default false).
  * @return {Promise<Application>} Fulfills based on the Discord API call.
  * @resolve {@link Application} The resolved Application object.
  * @reject Any error from the Discord API, e.g. invalid application ID.
  */
-function getApplication(interaction, opt_name) {
-	const app_id = interaction.options.getString(opt_name);
+async function getApplication(interaction, opt_name, required=false) {
+	const app_id = interaction.options.getString(opt_name, required);
 	return new REST({ version: '9' })
 		.setToken('ignored')
 		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
 		.then(data => new Application(interaction.client, data))
+}
+
+const DEFAULT_EMOJI_PATTERN = /^\p{Extended_Pictographic}$/u;
+const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
+
+/**
+ * Resolves a string interaction option into a single emoji. Built-in emojis are
+ * just unicode strings, thus they return as unicode strings. Custom emojis have
+ * a little more going on, so they are returned as Discord.js GuildEmoji objects.
+ *
+ * @param {CommandInteraction} interaction A Discord.js interaction containing a
+ *   string option that contains an emoji.
+ * @param {String} opt_name The option containing the Emoji.
+ * @param {Boolean} required Whether to throw an error if the option is not
+ *   found (default false).
+ * @return {GuildEmoji|String|null} The resolved emoji as a Discord.js
+ *   GuildEmoji object for custom emojis, as a String for built-in emojis, or
+ *   null if not found.
+ */
+function getEmoji(interaction, opt_name, required=false) {
+	const emoji_str = interaction.options.getString(opt_name, required) || '';
+
+	if (emoji_str.match(DEFAULT_EMOJI_PATTERN)) {
+		return emoji_str;
+	}
+
+	const match = emoji_str.match(CUSTOM_EMOJI_PATTERN);
+	if (match) {
+		const emoji_id = match[1];
+		return interaction.client.emojis.resolve(emoji_id);
+	}
+
+	return null;
 }
 
 // Makes an Error describing a mismatched Discord.js CommandInteraction.
@@ -374,6 +410,7 @@ function builderErr(interaction, part) {
 module.exports = {
 	Options: Object.freeze({
 		getApplication,
+		getEmoji,
 	}),
 	...require('@discordjs/builders'), // Forward utils and stuff
 	ApplicationCommandType, // For context menu builder
