@@ -21,6 +21,7 @@ This library simplifies this process by letting you do this all in one place.
 
 It also provides some bridging functionality to support additional option types:
 - Application
+- Emoji
 
 ## Usage
 
@@ -169,7 +170,11 @@ Discord (and Discord.js) does not currently support command options for things
 like Applications. This library provides functions to approximate these
 additional option types:
 
-- `getApplication(interaction, option_name)`
+- `getApplication(interaction, option_name, required=false)`
+- `getEmoji(interaction, option_name, required=false)`
+
+To use these, register the option as a string option, then use the
+`Options.getX(...)` helpers to retrieve the value.
 
 For example, this is a functional example of an Application option:
 
