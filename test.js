@@ -13,6 +13,8 @@ const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
 	Client,
+	Guild,
+	GuildEmoji,
 	Interaction,
 } = require('discord.js');
 const {
@@ -266,6 +268,7 @@ class MockCommandInteraction extends Interaction {
 				if (throw_toggle ?? true) throw Error('Bad');
 				return args.subcommand;
 			},
+			// FIXME Need to update this to support 'required' flag
 			getString: function(name, throw_toggle) {
 				if (throw_toggle) throw Error('bad');
 				return args.string_opts[name];
@@ -498,6 +501,65 @@ describe('Option resolvers', function() {
 			expect(app).to.be.instanceOf(Application);
 			expect(app.id).to.equal(test_app_id);
 			expect(app.name).to.equal(test_app_name);
+		});
+	});
+
+	describe('getEmoji()', function() {
+		const test_opt_name = 'thing';
+		function makeInteractionWithEmoji(str) {
+			return new MockCommandInteraction({
+				name: 'test',
+				string_opts: { [test_opt_name]: str },
+			});
+		}
+
+		// TODO Our mock command interaction isn't smart enough for this.
+		it('Required but not provided');
+
+		it('Optional and not provided', function() {
+			const interaction = makeInteractionWithEmoji(undefined);
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.null;
+		});
+
+		it('Not an emoji string', function() {
+			const interaction = makeInteractionWithEmoji('not an emoji');
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.null;
+		});
+
+		it('Built-in emoji string', function() {
+			const test_str = '🦊';
+			const interaction = makeInteractionWithEmoji(test_str);
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.a.string;
+			expect(emoji).to.equal(test_str);
+		});
+
+		it('Custom emoji string', function() {
+			const test_id = '884481185005326377';
+			const test_name = 'fennec_fox';
+			const test_str = `<:${test_name}:${test_id}>`;
+
+			// Need to populate the test client's cache with our test emoji.
+			// Discord.js internally aggregates the emojis of individual guilds
+			// on the fly, so we need to make a fake guild and set up all those
+			// links, too.
+			// https://github.com/discordjs/discord.js/blob/13.3.1/src/client/Client.js#L194
+			const interaction = makeInteractionWithEmoji(test_str);
+			const test_guild = new Guild(interaction.client, {
+				channels: [true], // Dumb hack.
+			});
+			const test_emoji = new GuildEmoji(interaction.client,
+				{ id: test_id, name: test_name },
+				test_guild
+			);
+			test_guild.emojis.cache.set(test_id, test_emoji);
+			interaction.client.guilds.cache.set(test_guild.id, test_guild);
+
+			const emoji = Options.getEmoji(interaction, test_opt_name);
+			expect(emoji).to.be.instanceOf(GuildEmoji)
+			expect(emoji.toString()).to.equal(test_str);
 		});
 	});
 });
