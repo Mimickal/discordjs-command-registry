@@ -512,8 +512,12 @@ describe('Option resolvers', function() {
 			});
 		}
 
-		// TODO Our mock command interaction isn't smart enough for this.
-		it('Required but not provided');
+		it('Required but not provided', function() {
+			const interaction = makeInteractionWithEmoji(undefined);
+			expect(
+				() => Options.getEmoji(interaction, test_opt_name, true)
+			).to.throw(TypeError, /expected a non-empty value/);
+		});
 
 		it('Optional and not provided', function() {
 			const interaction = makeInteractionWithEmoji(undefined);
