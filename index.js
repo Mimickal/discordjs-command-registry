@@ -349,12 +349,14 @@ class SlashCommandRegistry {
  * @param {CommandInteraction} interaction A Discord.js interaction containing a
  *   string option containing an application's ID.
  * @param {String} opt_name The option containing the application's ID.
+ * @param {Boolean} required Whether to throw an error if the option is not
+ *   found (default false).
  * @return {Promise<Application>} Fulfills based on the Discord API call.
  * @resolve {@link Application} The resolved Application object.
  * @reject Any error from the Discord API, e.g. invalid application ID.
  */
-function getApplication(interaction, opt_name) {
-	const app_id = interaction.options.getString(opt_name);
+async function getApplication(interaction, opt_name, required=false) {
+	const app_id = interaction.options.getString(opt_name, required);
 	return new REST({ version: '9' })
 		.setToken('ignored')
 		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
@@ -372,7 +374,8 @@ const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
  * @param {CommandInteraction} interaction A Discord.js interaction containing a
  *   string option that contains an emoji.
  * @param {String} opt_name The option containing the Emoji.
- * @param {Boolean} required Whether to throw an error if the option is not found.
+ * @param {Boolean} required Whether to throw an error if the option is not
+ *   found (default false).
  * @return {GuildEmoji|String|null} The resolved emoji as a Discord.js
  *   GuildEmoji object for custom emojis, as a String for built-in emojis, or
  *   null if not found.

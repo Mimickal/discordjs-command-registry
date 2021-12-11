@@ -478,33 +478,47 @@ describe('SlashCommandRegistry execute()', function() {
 
 describe('Option resolvers', function() {
 
-	it('getApplication()', function() {
+	describe('getApplication()', function() {
 		const test_opt_name = 'app_id';
-		const test_app_id = '12345';
-		const test_app_name = 'cool thing';
-
-		const scope_guard = nock('https://discord.com')
-			.get(`/api/v9/applications/${test_app_id}/rpc`)
-			.reply(200, {
-				id: test_app_id,
-				name: test_app_name,
-				icon: 'testhashthinghere',
+		function makeInteractionWithAppId(app_id) {
+			return new MockCommandInteraction({
+				name: 'test',
+				string_opts: { [test_opt_name]: app_id },
 			});
+		}
 
-		const interaction = new MockCommandInteraction({
-			name: 'test',
-			string_opts: { [test_opt_name]: test_app_id },
+		it('Required but not provided', function() {
+			const interaction = makeInteractionWithAppId(undefined);
+			return Options.getApplication(interaction, test_opt_name, true)
+				.then(() => expect.fail('Expected exception but got none'))
+				.catch(err => {
+					expect(err).to.be.instanceOf(TypeError);
+					expect(err.message).to.match(/expected a non-empty value/);
+				});
 		});
 
-		return Options.getApplication(interaction, test_opt_name).then(app => {
-			expect(app).to.be.instanceOf(Application);
-			expect(app.id).to.equal(test_app_id);
-			expect(app.name).to.equal(test_app_name);
+		it('Returns a good application', function() {
+			const test_app_id = '12345';
+			const test_app_name = 'cool thing';
+			const scope_guard = nock('https://discord.com')
+				.get(`/api/v9/applications/${test_app_id}/rpc`)
+				.reply(200, {
+					id: test_app_id,
+					name: test_app_name,
+					icon: 'testhashthinghere',
+				});
+			const interaction = makeInteractionWithAppId(test_app_id);
+
+			return Options.getApplication(interaction, test_opt_name).then(app => {
+				expect(app).to.be.instanceOf(Application);
+				expect(app.id).to.equal(test_app_id);
+				expect(app.name).to.equal(test_app_name);
+			});
 		});
 	});
 
 	describe('getEmoji()', function() {
-		const test_opt_name = 'thing';
+		const test_opt_name = 'emoji';
 		function makeInteractionWithEmoji(str) {
 			return new MockCommandInteraction({
 				name: 'test',
