@@ -13,6 +13,7 @@ const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
 	Client,
+	CommandInteractionOptionResolver,
 	Guild,
 	GuildEmoji,
 	Interaction,
@@ -259,21 +260,19 @@ class MockCommandInteraction extends Interaction {
 
 		this.is_command = args.is_command ?? true;
 		this.commandName = args.name;
-		this.options = {
-			getSubcommandGroup: function(throw_toggle) {
-				if (throw_toggle ?? true) throw Error('Bad');
-				return args.group;
-			},
-			getSubcommand: function(throw_toggle) {
-				if (throw_toggle ?? true) throw Error('Bad');
-				return args.subcommand;
-			},
-			// FIXME Need to update this to support 'required' flag
-			getString: function(name, throw_toggle) {
-				if (throw_toggle) throw Error('bad');
-				return args.string_opts[name];
-			},
-		};
+
+		// Closely depends on private implementations here:
+		// https://github.com/discordjs/discord.js/blob/13.3.1/src/structures/CommandInteractionOptionResolver.js
+		this.options = new CommandInteractionOptionResolver(
+			client,
+			Object.entries(args.string_opts || {}).map(([name, value]) => ({
+				type: 'STRING',
+				name: name,
+				value: value,
+			}))
+		);
+		this.options._group = args.group;
+		this.options._subcommand = args.subcommand;
 	}
 	isCommand() {
 		return this.is_command;
