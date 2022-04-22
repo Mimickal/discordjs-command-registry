@@ -30,7 +30,7 @@ const { REST } = require('@discordjs/rest');
 const {
 	ApplicationCommandType,
 	Routes,
-} = require('discord-api-types/v9');
+} = require('discord-api-types/v10');
 const {
 	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
@@ -357,13 +357,13 @@ class SlashCommandRegistry {
  */
 async function getApplication(interaction, opt_name, required=false) {
 	const app_id = interaction.options.getString(opt_name, required);
-	return new REST({ version: '9' })
+	return new REST({ version: '10' })
 		.setToken('ignored')
 		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
 		.then(data => new Application(interaction.client, data))
 }
 
-const DEFAULT_EMOJI_PATTERN = /^\p{Extended_Pictographic}$/u;
+const DEFAULT_EMOJI_PATTERN = /^\p{Emoji}+/u;
 const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
 
 /**

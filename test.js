@@ -128,7 +128,15 @@ describe('SlashCommandRegistry toJSON()', function() {
 		this.registry = new SlashCommandRegistry()
 			.addCommand(builder => builder
 				.setName('test1')
+				.setNameLocalizations({
+					'en-US': 'test1',
+					'ru': 'тест1',
+				})
 				.setDescription('test description 1')
+				.setDescriptionLocalizations({
+					'en-US': 'test description 1',
+					'ru': 'Описание теста 1',
+				})
 			)
 			.addCommand(builder => builder
 				.setName('test2')
@@ -141,19 +149,31 @@ describe('SlashCommandRegistry toJSON()', function() {
 		this.expected = [
 			{
 				name: 'test1',
+				name_localizations: {
+					'en-US': 'test1',
+					'ru': 'тест1',
+				},
 				description: 'test description 1',
+				description_localizations: {
+					'en-US': 'test description 1',
+					'ru': 'Описание теста 1',
+				},
 				options: [],
 				default_permission: undefined,
 			},
 			{
 				name: 'test2',
+				name_localizations: undefined,
 				description: 'test description 2',
+				description_localizations: undefined,
 				options: [],
 				default_permission: undefined,
 			},
 			{
 				name: 'test3',
+				name_localizations: undefined,
 				description: 'test description 3',
+				description_localizations: undefined,
 				options: [],
 				default_permission: undefined,
 			}
@@ -243,7 +263,7 @@ describe('SlashCommandRegistry registerCommands()', function() {
 			.then(() => expect.fail('Expected exception but got none'))
 			.catch(err => {
 				expect(err).to.be.instanceOf(DiscordAPIError);
-				expect(err.message).to.equal('Unknown Error');
+				expect(err.message).to.equal('No Description');
 			});
 	});
 });
@@ -501,7 +521,7 @@ describe('Option resolvers', function() {
 			const test_app_id = '12345';
 			const test_app_name = 'cool thing';
 			const scope_guard = nock('https://discord.com')
-				.get(`/api/v9/applications/${test_app_id}/rpc`)
+				.get(`/api/v10/applications/${test_app_id}/rpc`)
 				.reply(200, {
 					id: test_app_id,
 					name: test_app_name,
@@ -544,6 +564,16 @@ describe('Option resolvers', function() {
 			const emoji = Options.getEmoji(interaction, test_opt_name);
 			expect(emoji).to.be.a.string;
 			expect(emoji).to.equal(test_str);
+		});
+
+		it('Complex emoji string', function() {
+			// All emojis that were demonstrated to trip up the regex
+			Array.of('1️⃣', '🕴️', '🎞️', '🖼️').forEach(emoji_str => {
+				const interaction = makeInteractionWithOpt(emoji_str);
+				const got_emoji = Options.getEmoji(interaction, test_opt_name);
+				expect(got_emoji).to.be.a.string;
+				expect(got_emoji).to.equal(emoji_str);
+			});
 		});
 
 		it('Custom emoji string', function() {
