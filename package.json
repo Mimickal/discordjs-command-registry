@@ -23,6 +23,10 @@
     "registry",
     "library"
   ],
+  "files": [
+    "index.js",
+    "test.js"
+  ],
   "author": "Mimickal",
   "license": "LGPL-3.0",
   "dependencies": {
