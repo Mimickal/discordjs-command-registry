@@ -546,6 +546,15 @@ describe('Option resolvers', function() {
 			expect(emoji).to.equal(test_str);
 		});
 
+		it('Complex emoji string', function() {
+			Array.of('1️⃣', '🕴️', '🎞️', '🖼️').forEach(emoji_str => {
+				const interaction = makeInteractionWithOpt(emoji_str);
+				const got_emoji = Options.getEmoji(interaction, test_opt_name);
+				expect(got_emoji).to.be.a.string;
+				expect(got_emoji).to.equal(emoji_str);
+			});
+		});
+
 		it('Custom emoji string', function() {
 			const test_id = '884481185005326377';
 			const test_name = 'fennec_fox';

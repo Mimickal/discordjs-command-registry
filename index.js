@@ -363,7 +363,7 @@ async function getApplication(interaction, opt_name, required=false) {
 		.then(data => new Application(interaction.client, data))
 }
 
-const DEFAULT_EMOJI_PATTERN = /^\p{Extended_Pictographic}$/u;
+const DEFAULT_EMOJI_PATTERN = /^\p{Emoji}+/u;
 const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
 
 /**
