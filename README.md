@@ -1,6 +1,6 @@
 # Discord.js Command Registry
 
-<a href="LICENSE.md"><img align="right" alt="AGPL-3.0 Logo"
+<a href="LICENSE.md"><img align="right" alt="LGPL-3.0 Logo"
 src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 </a>
 
