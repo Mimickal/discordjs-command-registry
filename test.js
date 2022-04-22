@@ -521,7 +521,7 @@ describe('Option resolvers', function() {
 			const test_app_id = '12345';
 			const test_app_name = 'cool thing';
 			const scope_guard = nock('https://discord.com')
-				.get(`/api/v9/applications/${test_app_id}/rpc`)
+				.get(`/api/v10/applications/${test_app_id}/rpc`)
 				.reply(200, {
 					id: test_app_id,
 					name: test_app_name,
