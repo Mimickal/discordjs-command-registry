@@ -576,7 +576,7 @@ describe('Option resolvers', function() {
 			});
 		});
 
-		it('Custom emoji string', function() {
+		describe('Custom emojis', function() {
 			const test_id = '884481185005326377';
 			const test_name = 'fennec_fox';
 			const test_str = `<:${test_name}:${test_id}>`;
@@ -586,20 +586,35 @@ describe('Option resolvers', function() {
 			// on the fly, so we need to make a fake guild and set up all those
 			// links, too.
 			// https://github.com/discordjs/discord.js/blob/13.3.1/src/client/Client.js#L194
-			const interaction = makeInteractionWithOpt(test_str);
-			const test_guild = new Guild(interaction.client, {
-				channels: [true], // Dumb hack.
-			});
-			const test_emoji = new GuildEmoji(interaction.client,
-				{ id: test_id, name: test_name },
-				test_guild
-			);
-			test_guild.emojis.cache.set(test_id, test_emoji);
-			interaction.client.guilds.cache.set(test_guild.id, test_guild);
+			function addTestEmojiToClient(interaction) {
+				const test_guild = new Guild(interaction.client, {
+					channels: [true], // Dumb hack.
+				});
+				const test_emoji = new GuildEmoji(interaction.client,
+					{ id: test_id, name: test_name },
+					test_guild
+				);
+				test_guild.emojis.cache.set(test_id, test_emoji);
+				interaction.client.guilds.cache.set(test_guild.id, test_guild);
+			}
 
-			const emoji = Options.getEmoji(interaction, test_opt_name);
-			expect(emoji).to.be.instanceOf(GuildEmoji)
-			expect(emoji.toString()).to.equal(test_str);
+			it('Custom emoji by raw Discord ID', function() {
+				const interaction = makeInteractionWithOpt(test_id);
+				addTestEmojiToClient(interaction)
+
+				const emoji = Options.getEmoji(interaction, test_opt_name);
+				expect(emoji).to.be.instanceOf(GuildEmoji);
+				expect(emoji.toString()).to.equal(test_str);
+			});
+
+			it('Custom emoji string', function() {
+				const interaction = makeInteractionWithOpt(test_str);
+				addTestEmojiToClient(interaction);
+
+				const emoji = Options.getEmoji(interaction, test_opt_name);
+				expect(emoji).to.be.instanceOf(GuildEmoji)
+				expect(emoji.toString()).to.equal(test_str);
+			});
 		});
 	});
 });

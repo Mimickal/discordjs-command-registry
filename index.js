@@ -365,6 +365,7 @@ async function getApplication(interaction, opt_name, required=false) {
 
 const DEFAULT_EMOJI_PATTERN = /^\p{Emoji}+/u;
 const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
+const DISCORD_ID_PATTERN = /^\d{17,22}$/;
 
 /**
  * Resolves a string interaction option into a single emoji. Built-in emojis are
@@ -383,7 +384,12 @@ const CUSTOM_EMOJI_PATTERN = /^<a?:[^:]+:(\d{17,22})>$/;
 function getEmoji(interaction, opt_name, required=false) {
 	const emoji_str = interaction.options.getString(opt_name, required) || '';
 
+	// This matches built-in emojis AND Discord IDs, so we need a another check.
 	if (emoji_str.match(DEFAULT_EMOJI_PATTERN)) {
+		if (emoji_str.match(DISCORD_ID_PATTERN)) {
+			return interaction.client.emojis.resolve(emoji_str);
+		}
+
 		return emoji_str;
 	}
 
