@@ -160,22 +160,24 @@ describe('SlashCommandRegistry toJSON()', function() {
 				},
 				options: [],
 				default_permission: undefined,
+				default_member_permissions: undefined,
+				dm_permission: undefined,
 			},
 			{
 				name: 'test2',
-				name_localizations: undefined,
 				description: 'test description 2',
-				description_localizations: undefined,
 				options: [],
 				default_permission: undefined,
+				default_member_permissions: undefined,
+				dm_permission: undefined,
 			},
 			{
 				name: 'test3',
-				name_localizations: undefined,
 				description: 'test description 3',
-				description_localizations: undefined,
 				options: [],
 				default_permission: undefined,
+				default_member_permissions: undefined,
+				dm_permission: undefined,
 			}
 		];
 	});
