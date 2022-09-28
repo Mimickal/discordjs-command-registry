@@ -13,10 +13,10 @@ const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
 	Client,
+	CommandInteraction,
 	CommandInteractionOptionResolver,
 	Guild,
 	GuildEmoji,
-	Interaction,
 } = require('discord.js');
 const {
 	ContextMenuCommandBuilder,
@@ -270,7 +270,7 @@ describe('SlashCommandRegistry registerCommands()', function() {
 
 // A crappy mock interaction for testing that satisfies an instanceof check
 // without any of the actual safety checks.
-class MockCommandInteraction extends Interaction {
+class MockCommandInteraction extends CommandInteraction {
 	constructor(args) {
 		const client = new Client({ intents: [] });
 		super(client, {

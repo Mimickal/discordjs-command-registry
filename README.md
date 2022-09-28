@@ -4,6 +4,9 @@
 src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 </a>
 
+NOTE: version 2.x of this library supports discord.js v14. If you still need
+v13 support, use an older 1.x version of this library.
+
 This is a data structure that lets you define Discord.js slash commands,
 register them with Discord's API, and route Discord.js Interaction events to
 your handler for that command.
@@ -220,11 +223,11 @@ Node and Discord.js, but you don't need any of the others. This library
 downloads these dependencies for you, and you interact with them through this
 library.
 
-- Node 16.6.0 (or above)
-- [discord.js 13.x](https://discord.js.org/#/docs/main/13.3.1/general/welcome)
-- [@discordjs/builders](https://www.npmjs.com/package/@discordjs/builders)
-- [@discordjs/rest 0.1.0-canary.0](https://www.npmjs.com/package/@discordjs/rest)
-- [discord-api-types v9](https://www.npmjs.com/package/discord-api-types)
+- Node 16.9.0 (or above)
+- [discord.js 14.x](https://discord.js.org/#/docs/discord.js/14.5.0/general/welcome)
+- [@discordjs/builders 1.2.0](https://www.npmjs.com/package/@discordjs/builders)
+- [@discordjs/rest 1.2.0](https://www.npmjs.com/package/@discordjs/rest)
+- [discord-api-types 0.37.11](https://www.npmjs.com/package/discord-api-types)
 
 ## License
 
