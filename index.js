@@ -38,6 +38,8 @@ const {
 	SlashCommandSubcommandGroupBuilder,
 } = require('@discordjs/builders');
 
+const API_VERSION = '10';
+
 /**
  * Sets a handler function called when this command is executed.
  *
@@ -96,7 +98,7 @@ class SlashCommandRegistry {
 	 * Creates a new {@link SlashCommandRegistry}.
 	 */
 	constructor() {
-		this.#rest = new REST({ version: '9' });
+		this.#rest = new REST({ version: API_VERSION });
 	}
 
 	/**
@@ -357,7 +359,7 @@ class SlashCommandRegistry {
  */
 async function getApplication(interaction, opt_name, required=false) {
 	const app_id = interaction.options.getString(opt_name, required);
-	return new REST({ version: '10' })
+	return new REST({ version: API_VERSION })
 		.setToken('ignored')
 		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
 		.then(data => new Application(interaction.client, data))

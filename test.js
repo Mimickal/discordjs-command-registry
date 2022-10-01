@@ -242,7 +242,7 @@ describe('SlashCommandRegistry registerCommands()', function() {
 		makeMockApiWithCode(200);
 		await this.registry.registerCommands();
 		expect(captured_path)
-			.to.equal(`/api/v9/applications/${this.app_id}/commands`);
+			.to.equal(`/api/v10/applications/${this.app_id}/commands`);
 		expect(captured_headers.authorization)
 			.to.equal(`Bot ${this.token}`);
 	});
@@ -252,7 +252,7 @@ describe('SlashCommandRegistry registerCommands()', function() {
 		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ application_id: new_app_id });
 		expect(captured_path)
-			.to.equal(`/api/v9/applications/${new_app_id}/commands`);
+			.to.equal(`/api/v10/applications/${new_app_id}/commands`);
 	});
 
 	it('Uses token override and resets after', async function() {
@@ -274,7 +274,7 @@ describe('SlashCommandRegistry registerCommands()', function() {
 		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ guild: guild });
 		expect(captured_path).to.equal(
-			`/api/v9/applications/${this.app_id}/guilds/${guild}/commands`
+			`/api/v10/applications/${this.app_id}/guilds/${guild}/commands`
 		);
 	});
 
