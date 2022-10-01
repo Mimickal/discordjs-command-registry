@@ -7,8 +7,12 @@
  * License v3.0. See LICENSE.md or
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
-const expect = require('chai').expect;
-const nock = require('nock');
+const chai = require('chai');
+chai.use(require('chai-as-promised'));
+const expect = chai.expect;
+
+const { MockAgent, setGlobalDispatcher } = require('undici'); // From discord.js
+const { ApplicationCommandOptionType } = require('discord-api-types/v10');
 const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
@@ -30,6 +34,12 @@ const {
 	inlineCode,
 	time,
 } = require('.');
+
+// discord.js uses undici for HTTP requests, so we piggyback off of that
+// transitive dependency to mock those requests in testing.
+const mockAgent = new MockAgent();
+mockAgent.disableNetConnect();
+setGlobalDispatcher(mockAgent);
 
 describe('Builders have setHandler() functions injected', function() {
 	Array.of(
@@ -193,16 +203,29 @@ describe('SlashCommandRegistry toJSON()', function() {
 });
 
 describe('SlashCommandRegistry registerCommands()', function() {
-	let captured_request;
-	let res_code = 200;
-	const scope_guard = nock('https://discord.com/')
-		.persist()
-		.put(/.*/)
-		.reply(function(uri, body) {
-			captured_request = this.req;
-			captured_request.body = body;
-			return [res_code, 'Mocked Discord response'];
-		});
+	let captured_path;
+	let captured_headers;
+	let captured_body;
+
+	function makeMockApiWithCode(code) {
+		return mockAgent.get('https://discord.com')
+			.intercept({
+				method: 'PUT',
+				path: (path) => {
+					captured_path = path;
+					return true;
+				},
+				headers: (headers) => {
+					captured_headers = headers;
+					return true;
+				},
+				body: (body) => {
+					captured_body = JSON.parse(body);
+					return true;
+				},
+			})
+			.reply(code, 'Mocked Discord response');
+	}
 
 	beforeEach(function() {
 		this.app_id = 'test_app_id';
@@ -210,40 +233,47 @@ describe('SlashCommandRegistry registerCommands()', function() {
 		this.registry = new SlashCommandRegistry()
 			.setApplicationId(this.app_id).setToken(this.token);
 
-		captured_request = null;
+		captured_path = null;
+		captured_headers = null;
+		captured_body = null;
 	});
 
 	it('Uses set application ID and token', async function() {
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands();
-		expect(captured_request.path)
+		expect(captured_path)
 			.to.equal(`/api/v9/applications/${this.app_id}/commands`);
-		expect(captured_request.headers.authorization[0])
+		expect(captured_headers.authorization)
 			.to.equal(`Bot ${this.token}`);
 	});
 
 	it('Uses application ID override', async function() {
 		const new_app_id = 'override';
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ application_id: new_app_id });
-		expect(captured_request.path)
+		expect(captured_path)
 			.to.equal(`/api/v9/applications/${new_app_id}/commands`);
 	});
 
 	it('Uses token override and resets after', async function() {
 		const newtoken = 'override';
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ token: newtoken });
-		expect(captured_request.headers.authorization[0])
+		expect(captured_headers.authorization)
 			.to.equal(`Bot ${newtoken}`);
 
 		// Token is reset
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands();
-		expect(captured_request.headers.authorization[0])
+		expect(captured_headers.authorization)
 			.to.equal(`Bot ${this.token}`);
 	});
 
 	it('Providing guild registers as guild commands', async function() {
 		const guild = 'test_guild_id';
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ guild: guild });
-		expect(captured_request.path).to.equal(
+		expect(captured_path).to.equal(
 			`/api/v9/applications/${this.app_id}/guilds/${guild}/commands`
 		);
 	});
@@ -253,20 +283,17 @@ describe('SlashCommandRegistry registerCommands()', function() {
 			.addCommand(builder => builder.setName('test1').setDescription('test desc 1'))
 			.addCommand(builder => builder.setName('test2').setDescription('test desc 2'));
 
+		makeMockApiWithCode(200);
 		await this.registry.registerCommands({ commands: ['test1'] });
-		expect(captured_request.body).to.deep.equal(
+		expect(captured_body).to.deep.equal(
 			[{ name: 'test1', description: 'test desc 1', options: [] }]
 		);
 	});
 
-	it('Handles errors from the Discord API', function() {
-		res_code = 400;
-		return this.registry.registerCommands()
-			.then(() => expect.fail('Expected exception but got none'))
-			.catch(err => {
-				expect(err).to.be.instanceOf(DiscordAPIError);
-				expect(err.message).to.equal('No Description');
-			});
+	it('Handles errors from the Discord API', async function() {
+		makeMockApiWithCode(400);
+		return expect(this.registry.registerCommands())
+			.to.be.rejectedWith(DiscordAPIError, 'No Description');
 	});
 });
 
@@ -276,6 +303,9 @@ class MockCommandInteraction extends CommandInteraction {
 	constructor(args) {
 		const client = new Client({ intents: [] });
 		super(client, {
+			data: {
+				id: 1,
+			},
 			type: 1,
 			user: {}
 		});
@@ -288,7 +318,7 @@ class MockCommandInteraction extends CommandInteraction {
 		this.options = new CommandInteractionOptionResolver(
 			client,
 			Object.entries(args.string_opts || {}).map(([name, value]) => ({
-				type: 'STRING',
+				type: ApplicationCommandOptionType.String,
 				name: name,
 				value: value,
 			}))
@@ -500,10 +530,14 @@ describe('SlashCommandRegistry execute()', function() {
 
 describe('Option resolvers', function() {
 	const test_opt_name = 'test_opt';
-	function makeInteractionWithOpt(opt) {
+	/**
+	 * Makes a {@link MockCommandInteraction} object with a single string
+	 * option containing the given value.
+	 */
+	function makeInteractionWithOpt(value) {
 		return new MockCommandInteraction({
 			name: 'test',
-			string_opts: { [test_opt_name]: opt },
+			string_opts: { [test_opt_name]: value },
 		});
 	}
 
@@ -522,13 +556,19 @@ describe('Option resolvers', function() {
 		it('Returns a good application', function() {
 			const test_app_id = '12345';
 			const test_app_name = 'cool thing';
-			const scope_guard = nock('https://discord.com')
-				.get(`/api/v10/applications/${test_app_id}/rpc`)
-				.reply(200, {
+
+			mockAgent.get('https://discord.com')
+				.intercept({
+					method: 'GET',
+					path: `/api/v10/applications/${test_app_id}/rpc`,
+				}).reply(200, {
 					id: test_app_id,
 					name: test_app_name,
 					icon: 'testhashthinghere',
+				}, {
+					headers: { 'content-type': 'application/json' }
 				});
+
 			const interaction = makeInteractionWithOpt(test_app_id);
 
 			return Options.getApplication(interaction, test_opt_name).then(app => {
