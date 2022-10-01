@@ -16,6 +16,7 @@ const { ApplicationCommandOptionType } = require('discord-api-types/v10');
 const { DiscordAPIError } = require('@discordjs/rest');
 const {
 	Application,
+	BaseInteraction,
 	Client,
 	CommandInteraction,
 	CommandInteractionOptionResolver,
@@ -453,7 +454,9 @@ describe('SlashCommandRegistry execute()', function() {
 			.then(() => expect.fail('Expected exception but got none'))
 			.catch(err => {
 				expect(err).to.be.instanceOf(Error);
-				expect(err.message).to.equal('given value was not a Discord.js Interaction');
+				expect(err.message).to.equal(
+					`given value was not a Discord.js ${BaseInteraction.name}`
+				);
 			});
 	});
 
