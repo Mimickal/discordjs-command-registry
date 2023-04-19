@@ -9,10 +9,6 @@
  ******************************************************************************/
 
 /**
- * @external CommandInteraction
- * @see https://discord.js.org/#/docs/main/stable/class/CommandInteraction
- */
-/**
  * The function called during command execution.
  *
  * @callback Handler
@@ -103,7 +99,7 @@ class SlashCommandRegistry {
 	}
 
 	/**
-	 * Defines a new command from a builder.
+	 * Defines a new slash command from a builder.
 	 * Commands defined here can also be registered with Discord's API.
 	 *
 	 * @param {SlashCommandBuilder|Function<SlashCommandBuilder>} input

@@ -170,6 +170,7 @@ describe('SlashCommandRegistry toJSON()', function() {
 					'ru': 'Описание теста 1',
 				},
 				options: [],
+				nsfw: undefined,
 				default_permission: undefined,
 				default_member_permissions: undefined,
 				dm_permission: undefined,
@@ -180,7 +181,10 @@ describe('SlashCommandRegistry toJSON()', function() {
 				options: [],
 				default_permission: undefined,
 				default_member_permissions: undefined,
+				description_localizations: undefined,
 				dm_permission: undefined,
+				name_localizations: undefined,
+				nsfw: undefined,
 			},
 			{
 				name: 'test3',
@@ -188,8 +192,11 @@ describe('SlashCommandRegistry toJSON()', function() {
 				options: [],
 				default_permission: undefined,
 				default_member_permissions: undefined,
+				description_localizations: undefined,
 				dm_permission: undefined,
-			}
+				name_localizations: undefined,
+				nsfw: undefined,
+			},
 		];
 	});
 
