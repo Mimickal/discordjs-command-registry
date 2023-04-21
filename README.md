@@ -4,17 +4,20 @@
 src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 </a>
 
+_**NOTE: version 2.x of this library supports discord.js v14. If you still need
+v13 support, use an older 1.x version of this library.**_
+
 This is a data structure that lets you define Discord.js slash commands,
 register them with Discord's API, and route Discord.js Interaction events to
 your handler for that command.
 
 Currently Discord.js separates slash command creation into three different,
 weirdly disjoined processes. They want you to:
-1. [Define your commands with a builder](https://github.com/discordjs/builders/blob/main/docs/examples/Slash%20Command%20Builders.md),
+1. [Define your commands with a builder](https://github.com/discordjs/discord.js/tree/main/packages/builders),
 which is only used to construct the data of an HTTP call.
-1. [Deploy them with a separate HTTP PUT call](https://discordjs.guide/creating-your-bot/creating-commands.html#command-deployment-script),
+1. [Deploy them with a separate HTTP PUT call](https://discordjs.guide/creating-your-bot/command-deployment.html#guild-commands),
 which uses an entirely separate library that directly relies on the Discord API
-1. [Set up a fairly complicated file structure for each command](https://github.com/discordjs/builders/blob/main/docs/examples/Slash%20Command%20Builders.md),
+1. [Set up a fairly complicated file structure for each command](https://discordjs.guide/creating-your-bot/slash-commands.html),
 which still requires you to write your own router and juggle your own handlers
 
 This library simplifies this process by letting you do this all in one place.
@@ -202,12 +205,12 @@ const commands = new SlashCommandRegistry()
     );
 ```
 
-## Other stuff from `@discordjs/builders`
+## Helpers
 
 The Discord.js builders package [has a lot of neat
-helper functions](https://discordjs.guide/popular-topics/builders.html). The
-command registry passes all of these functions through, so they can be included
-directly (preventing the need to add / import `@discordjs/builders`).
+helper functions](https://discord.js.org/docs/packages/builders/main#/docs/discord.js/14.9.0/general/welcome).
+The command registry passes all of these functions through, so they can be
+included directly (preventing the need to add / import `@discordjs/builders`).
 
 ```js
 const { bold, hyperlink, time } = require('discord-command-registry');
@@ -215,16 +218,10 @@ const { bold, hyperlink, time } = require('discord-command-registry');
 
 ## Dependencies
 
-This library is built using the following libraries. You will, of course, need
-Node and Discord.js, but you don't need any of the others. This library
-downloads these dependencies for you, and you interact with them through this
-library.
+This library is built using the following libraries:
 
-- Node 16.6.0 (or above)
-- [discord.js 13.x](https://discord.js.org/#/docs/main/13.3.1/general/welcome)
-- [@discordjs/builders](https://www.npmjs.com/package/@discordjs/builders)
-- [@discordjs/rest 0.1.0-canary.0](https://www.npmjs.com/package/@discordjs/rest)
-- [discord-api-types v9](https://www.npmjs.com/package/discord-api-types)
+- Node 16.9.0 (or above)
+- [discord.js 14.x](https://discord.js.org/#/docs/discord.js/14.9.0/general/welcome)
 
 ## License
 

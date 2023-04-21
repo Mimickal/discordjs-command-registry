@@ -9,10 +9,6 @@
  ******************************************************************************/
 
 /**
- * @external CommandInteraction
- * @see https://discord.js.org/#/docs/main/stable/class/CommandInteraction
- */
-/**
  * The function called during command execution.
  *
  * @callback Handler
@@ -22,7 +18,7 @@
 
 const {
 	Application,
-	Interaction,
+	BaseInteraction,
 	Snowflake,
 	CommandInteraction,
 } = require('discord.js');
@@ -37,6 +33,8 @@ const {
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } = require('@discordjs/builders');
+
+const API_VERSION = '10';
 
 /**
  * Sets a handler function called when this command is executed.
@@ -63,7 +61,8 @@ SlashCommandSubcommandGroupBuilder.prototype.setHandler = setHandler;
 
 /**
  * A collection of Discord.js commands that registers itself with Discord's API
- * and routes Discord.js Interaction events to the appropriate command handlers.
+ * and routes Discord.js {@link BaseInteraction} events to the appropriate
+ * command handlers.
  */
 class SlashCommandRegistry {
 
@@ -96,11 +95,11 @@ class SlashCommandRegistry {
 	 * Creates a new {@link SlashCommandRegistry}.
 	 */
 	constructor() {
-		this.#rest = new REST({ version: '9' });
+		this.#rest = new REST({ version: API_VERSION });
 	}
 
 	/**
-	 * Defines a new command from a builder.
+	 * Defines a new slash command from a builder.
 	 * Commands defined here can also be registered with Discord's API.
 	 *
 	 * @param {SlashCommandBuilder|Function<SlashCommandBuilder>} input
@@ -211,24 +210,24 @@ class SlashCommandRegistry {
 	}
 
 	/**
-	 * Attempts to execute the given Discord.js Interaction using the most
-	 * specific handler provided. For example, if an individual subcommand does
-	 * not have a handler but the parent command does, the parent's handler will
-	 * be called. If no builder matches the interaction, the default handler is
-	 * called (if provided).
+	 * Attempts to execute the given Discord.js {@link BaseInteraction} using
+	 * the most specific handler provided. For example, if an individual
+	 * subcommand does not have a handler but the parent command does, the
+	 * parent's handler will be called. If no builder matches the interaction,
+	 * the default handler is called (if provided).
 	 *
 	 * This function is a no-op if:
-	 * - The interaction is not a supported {@link Interaction} type. We
+	 * - The interaction is not a supported {@link BaseInteraction} type. We
 	 *   currently support:
 	 *     - {@link CommandInteraction}
 	 *     - {@link ContextMenuInteraction}
 	 * - No builder matches the interaction and no default handler is set.
 	 *
 	 * This function is set up so it can be directly used as the handler for
-	 * Discord.js' `interactionCreate` event (but you may consider a thin wrapper
-	 * for logging).
+	 * Discord.js' `interactionCreate` event (but you may consider a thin
+	 * wrapper for logging).
 	 *
-	 * @param {Interaction} interaction A Discord.js Interaction object.
+	 * @param {BaseInteraction} interaction A Discord.js interaction object.
 	 * @return {Promise<*>} Fulfills based on command execution.
 	 * @resolve The value returned from the {@link Handler}.
 	 * @reject
@@ -238,12 +237,11 @@ class SlashCommandRegistry {
 	 * - Any Error that occurs during handler execution.
 	 */
 	async execute(interaction) {
-		// TODO maybe allow "non-strict" interaction matching?
-		if (!(interaction instanceof Interaction)) {
-			throw new Error('given value was not a Discord.js Interaction');
+		if (!(typeof interaction?.isCommand === 'function')) {
+			throw new Error(`given value was not a Discord.js command`);
 		}
 
-		if (!interaction.isCommand() && !interaction.isContextMenu()) {
+		if (!interaction.isCommand?.() && !interaction.isContextMenuCommand?.()) {
 			return;
 		}
 
@@ -357,7 +355,7 @@ class SlashCommandRegistry {
  */
 async function getApplication(interaction, opt_name, required=false) {
 	const app_id = interaction.options.getString(opt_name, required);
-	return new REST({ version: '10' })
+	return new REST({ version: API_VERSION })
 		.setToken('ignored')
 		.get(`/applications/${app_id}/rpc`) // NOTE: undocumented endpoint!
 		.then(data => new Application(interaction.client, data))
