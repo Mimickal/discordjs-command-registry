@@ -237,12 +237,11 @@ class SlashCommandRegistry {
 	 * - Any Error that occurs during handler execution.
 	 */
 	async execute(interaction) {
-		// TODO maybe allow "non-strict" interaction matching?
-		if (!(interaction instanceof BaseInteraction)) {
-			throw new Error(`given value was not a Discord.js ${BaseInteraction.name}`);
+		if (!(typeof interaction?.isCommand === 'function')) {
+			throw new Error(`given value was not a Discord.js command`);
 		}
 
-		if (!interaction.isCommand() && !interaction.isContextMenuCommand()) {
+		if (!interaction.isCommand?.() && !interaction.isContextMenuCommand?.()) {
 			return;
 		}
 
