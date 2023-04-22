@@ -7,9 +7,13 @@ src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 _**NOTE: version 2.x of this library supports discord.js v14. If you still need
 v13 support, use an older 1.x version of this library.**_
 
-This is a data structure that lets you define Discord.js slash commands,
-register them with Discord's API, and route Discord.js Interaction events to
-your handler for that command.
+## What is this?
+
+Discord.js Command Registry is a data structure that lets you define Discord.js
+slash commands, register them with Discord's API, and route Discord.js
+Interaction events to your handler for that command.
+
+## Why should I use this?
 
 Currently Discord.js separates slash command creation into three different,
 weirdly disjoined processes. They want you to:
@@ -21,14 +25,18 @@ which uses an entirely separate library that directly relies on the Discord API
 which still requires you to write your own router and juggle your own handlers
 
 This library simplifies this process by letting you do this all in one place.
+You can:
+1. [Define your commands using builders](#defining-commands-with-the-slashcommandregistry)
+2. [Register your commands directly from the builder](#registering-commands-with-discord)
+3. [Execute handlers for your interactions directly from the builder](#executing-commands)
 
-It also provides some bridging functionality to support additional option types:
+It also supports some additional "option" types
 - Application
 - Emoji
 
-## Usage
+# Usage
 
-### Defining commands with the `SlashCommandRegistry`
+## Defining commands with the `SlashCommandRegistry`
 
 This library adds a new builder `SlashCommandRegistry` that serves as the
 entry point for defining all of your commands. Existing builders from
@@ -81,10 +89,41 @@ const commands = new SlashCommandRegistry()
     );
 ```
 
-### Registering commands with Discord
+## Registering commands with Discord
 
-The `SlashCommandRegistry` can register commands with Discord's API with a
-single function call.
+This library gives you a lot of flexibility with registration.
+
+### Using the script
+
+If you put your `SlashCommandRegistry` in its own file and make it the default
+export, you can use the script included with this library.
+
+```js
+// src/commands.js
+// Define your SlashCommandRegistry as the default export in its own file.
+const commands = new SlashCommandRegistry();
+module.exports = commands;
+```
+
+```sh
+# If your app ID and token are set in commands.js:
+npm exec register src/commands.js
+
+# If your app ID and token are defined in a config file:
+# NOTE: don't forget the -- to pass args to the script!
+npm exec register src/commands.js -- --config path/to/my/config.json
+
+# If you want to pass app ID and token in directly:
+# You can provide token as a string or a file, but you should prefer files to
+# avoid printing your token in your shell.
+npm exec register src/commands.js -- --app 1234 --token path/to/token_file
+npm exec register src/commands.js -- --app 1234 --token "my token text"
+```
+
+### Using `SlashCommandRegistry.registerCommands()`
+
+If you want more control over registration, the `SlashCommandRegistry` can
+register commands with Discord's API with a single function call.
 
 ```js
 commands.registerCommands({
@@ -97,7 +136,7 @@ commands.registerCommands({
 .catch(err => console.error('Something went wrong', err));
 ```
 
-Ok cool, but what if you need more control? You also can restrict this to
+Ok cool, but what if you need even more control? You also can restrict this to
 register only a subset of commands.
 
 ```js
@@ -114,18 +153,19 @@ await commands.registerCommands({
 });
 ```
 
-You can also store the `application_id` and `token` in the registry to avoid
-repeating it:
+You can also store the `application_id`, `guild_id`, and `token` in the
+registry to avoid repeating it:
 
 ```js
 commands
     .setApplicationID('your bot client ID')
+    .setGuildId('your guild ID')
     .setToken('your bot token here');
 
 commands.registerCommands({ commands: ['ping'] });
 ```
 
-### Executing commands
+## Executing commands
 
 You can pipe Discord.js interaction events directly into a
 `SlashCommandRegistry`'s `execute()` method.
@@ -149,7 +189,7 @@ This library does not do anything with the `Interaction` object other than route
 it to the appropriate handler function. It's up to you to extract relevant data
 (such as options) from the `Interaction`.
 
-### Which handler gets called?
+## Which handler gets called?
 
 I added a handler to a subcommand, the group that subcommand belongs to, the
 command that group belongs to, and to the registry itself. Which one actually
@@ -167,7 +207,7 @@ In other words, if your command and subcommand both have a handler, only the
 subcommand's handler will be called. Using a lower-priority handler can give you
 some flexibility if you have many commands that all use similar code.
 
-### Additional option types
+## Additional option types
 
 Discord (and Discord.js) does not currently support command options for things
 like Applications. This library provides functions to approximate these
@@ -216,14 +256,7 @@ included directly (preventing the need to add / import `@discordjs/builders`).
 const { bold, hyperlink, time } = require('discord-command-registry');
 ```
 
-## Dependencies
-
-This library is built using the following libraries:
-
-- Node 16.9.0 (or above)
-- [discord.js 14.x](https://discord.js.org/#/docs/discord.js/14.9.0/general/welcome)
-
-## License
+# License
 
 Copyright 2021 [Mimickal](https://github.com/Mimickal)
 

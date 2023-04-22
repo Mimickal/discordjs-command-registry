@@ -19,20 +19,15 @@
 const {
 	Application,
 	BaseInteraction,
+	ContextMenuCommandBuilder,
 	Snowflake,
 	CommandInteraction,
-} = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const {
-	ApplicationCommandType,
+	REST,
 	Routes,
-} = require('discord-api-types/v10');
-const {
-	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
-} = require('@discordjs/builders');
+} = require('discord.js');
 
 const API_VERSION = '10';
 
@@ -78,6 +73,11 @@ class SlashCommandRegistry {
 	 * The handler run for unrecognized commands.
 	 */
 	default_handler = null;
+
+	/**
+	 * A Discord guild ID used to restrict command registration to one guild.
+	 */
+	guild_id = null;
 
 	/**
 	 * The bot token used to register commands with Discord's API.
@@ -175,6 +175,18 @@ class SlashCommandRegistry {
 		}
 
 		this.default_handler = handler;
+		return this;
+	}
+
+	/**
+	 * Sets the Discord guild ID. This restricts command registration to the
+	 * given guild, rather than registering globally.
+	 *
+	 * @param {Snowflake} id The Discord guild ID.
+	 * @returns {SlashCommandRegistry} instance so we can chain calls.
+	 */
+	setGuildId(id) {
+		this.guild_id = id;
 		return this;
 	}
 
@@ -300,9 +312,9 @@ class SlashCommandRegistry {
 	 *     only these commands will be registered with the API. This can be
 	 *     useful for only registering new commands. If omitted, all commands
 	 *     are registered.
-	 * - {@link Snowflake} `guild` - A Discord Guild ID. If provided, commands
-	 *     will be registered for a specific guild instead of globally. This can
-	 *     be useful for testing commands.
+	 * - {@link Snowflake} `guild` - A Discord Guild ID. If specified, this ID
+	 *     will override the one specified via
+	 *     {@link SlashCommandRegistry.setGuildId} for this call.
 	 * - {@link String} `token` - A Discord bot token. If specified, this token
 	 *     will override the one specified via
 	 *     {@link SlashCommandRegistry.setToken} for this call.
@@ -321,9 +333,10 @@ class SlashCommandRegistry {
 
 		try {
 			const app_id = options.application_id || this.application_id;
+			const guild_id = options.guild || this.guild_id;
 			return await this.#rest.put(
-				options.guild
-					? Routes.applicationGuildCommands(app_id, options.guild)
+				guild_id
+					? Routes.applicationGuildCommands(app_id, guild_id)
 					: Routes.applicationCommands(app_id),
 				{ body: this.toJSON(options.commands) },
 			);
@@ -417,7 +430,6 @@ module.exports = {
 		getEmoji,
 	}),
 	...require('@discordjs/builders'), // Forward utils and stuff
-	ApplicationCommandType, // For context menu builder
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
