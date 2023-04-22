@@ -39,6 +39,7 @@ const cliArgs = new Command()
 		},
 	)
 	.option('-g, --guild <string>', 'A Discord guild ID.')
+	.option('-n, --names <string...>', 'Only register these commands.')
 	.option('-t, --token <string|path>',
 		'Path to a token file OR a raw token string.\n' +
 		'ALERT: Using a file is highly recommended to avoid printing token in your shell history!',
@@ -82,6 +83,7 @@ registry.registerCommands({
 		cliArgs.getOptionValue('token') ??
 		cliArgs.getOptionValue('config')?.token
 	),
+	commands: cliArgs.getOptionValue('names'),
 }).then(data => {
 	console.debug(data);
 	console.debug();
