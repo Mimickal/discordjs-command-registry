@@ -19,20 +19,15 @@
 const {
 	Application,
 	BaseInteraction,
+	ContextMenuCommandBuilder,
 	Snowflake,
 	CommandInteraction,
-} = require('discord.js');
-const { REST } = require('@discordjs/rest');
-const {
-	ApplicationCommandType,
+	REST,
 	Routes,
-} = require('discord-api-types/v10');
-const {
-	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
-} = require('@discordjs/builders');
+} = require('discord.js');
 
 const API_VERSION = '10';
 
@@ -435,7 +430,6 @@ module.exports = {
 		getEmoji,
 	}),
 	...require('@discordjs/builders'), // Forward utils and stuff
-	ApplicationCommandType, // For context menu builder
 	SlashCommandRegistry,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
