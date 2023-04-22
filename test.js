@@ -238,7 +238,9 @@ describe('SlashCommandRegistry registerCommands()', function() {
 		this.app_id = 'test_app_id';
 		this.token = 'test_token';
 		this.registry = new SlashCommandRegistry()
-			.setApplicationId(this.app_id).setToken(this.token);
+			.setApplicationId(this.app_id)
+			.setGuildId(null)
+			.setToken(this.token);
 
 		captured_path = null;
 		captured_headers = null;
@@ -252,6 +254,15 @@ describe('SlashCommandRegistry registerCommands()', function() {
 			.to.equal(`/api/v10/applications/${this.app_id}/commands`);
 		expect(captured_headers.authorization)
 			.to.equal(`Bot ${this.token}`);
+	});
+
+	it('Providing guild registers as guild commands', async function() {
+		const guild = 'test_guild_id';
+		makeMockApiWithCode(200);
+		await this.registry.setGuildId(guild).registerCommands();
+		expect(captured_path).to.equal(
+			`/api/v10/applications/${this.app_id}/guilds/${guild}/commands`
+		);
 	});
 
 	it('Uses application ID override', async function() {
@@ -276,12 +287,15 @@ describe('SlashCommandRegistry registerCommands()', function() {
 			.to.equal(`Bot ${this.token}`);
 	});
 
-	it('Providing guild registers as guild commands', async function() {
-		const guild = 'test_guild_id';
+	it('Uses guild ID override', async function() {
+		const newGuild = 'override';
 		makeMockApiWithCode(200);
-		await this.registry.registerCommands({ guild: guild });
+		await this.registry
+			.setGuildId('original_guild')
+			.registerCommands({ guild: newGuild });
+
 		expect(captured_path).to.equal(
-			`/api/v10/applications/${this.app_id}/guilds/${guild}/commands`
+			`/api/v10/applications/${this.app_id}/guilds/${newGuild}/commands`
 		);
 	});
 

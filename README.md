@@ -114,12 +114,13 @@ await commands.registerCommands({
 });
 ```
 
-You can also store the `application_id` and `token` in the registry to avoid
-repeating it:
+You can also store the `application_id`, `guild_id`, and `token` in the
+registry to avoid repeating it:
 
 ```js
 commands
     .setApplicationID('your bot client ID')
+    .setGuildId('your guild ID')
     .setToken('your bot token here');
 
 commands.registerCommands({ commands: ['ping'] });
