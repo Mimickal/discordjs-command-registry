@@ -21,7 +21,7 @@ const cliArgs = new Command()
 	].join(' '))
 	.argument('<registry>',
 		'Path to a JavaScript file whose default export is a SlashCommandRegistry.',
-		require,
+		(path) => require(resolve(path)),
 	)
 	.option('-a, --app <string>', 'The Discord bot application ID.')
 	.option('-c, --config <path>',
