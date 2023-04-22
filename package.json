@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
   "main": "index.js",
+  "bin": {
+    "register": "./register.js"
+  },
   "scripts": {
     "test": "mocha test.js",
     "test:coverage": "nyc --reporter=text mocha test.js"
@@ -25,6 +28,7 @@
   ],
   "files": [
     "index.js",
+    "register.js",
     "test.js"
   ],
   "author": "Mimickal",
@@ -37,5 +41,8 @@
     "chai-as-promised": "^7.1.1",
     "mocha": "^9.2.2",
     "nyc": "^15.1.0"
+  },
+  "dependencies": {
+    "commander": "^10.0.1"
   }
 }
