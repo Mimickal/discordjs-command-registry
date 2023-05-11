@@ -80,8 +80,8 @@ export function getEmoji(
 	}
 
 	const match = emoji_str.match(FormattingPatterns.Emoji);
-	if (match) {
-		const emoji_id = match[1];
+	if (match?.groups) {
+		const emoji_id = match.groups.id;
 		return interaction.client.emojis.resolve(emoji_id);
 	}
 

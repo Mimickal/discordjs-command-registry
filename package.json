@@ -16,7 +16,7 @@
     "prepack": "npm run clean && npm run build && npm test",
     "prepare": "npm run build",
     "prepublishOnly": "npm test",
-    "test": "mocha test/*",
+    "test": "mocha test/*.test.ts",
     "test:coverage": "nyc --reporter=text mocha test/*"
   },
   "homepage": "https://www.npmjs.com/package/discord-command-registry",
