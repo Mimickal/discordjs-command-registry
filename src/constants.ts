@@ -7,14 +7,4 @@
  * License v3.0. See LICENSE.md or
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
-export * from '@discordjs/builders'; // Forward utils and stuff
-export {
-	ContextMenuCommandBuilder,
-	SlashCommandBuilder,
-	SlashCommandSubcommandBuilder,
-	SlashCommandSubcommandGroupBuilder,
-} from './builders';
-import * as Options from './options';
-export {
-	Options,
-};
+export const API_VERSION = '10' as const;
