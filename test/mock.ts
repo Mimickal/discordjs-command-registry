@@ -17,12 +17,21 @@ import {
 	CommandInteractionOptionResolver,
 	InteractionType,
 } from 'discord.js';
+import { MockAgent, setGlobalDispatcher } from 'undici'; // From discord.js
+
+// discord.js uses undici for HTTP requests, so we piggyback off of that
+// transitive dependency to mock those requests in testing.
+const mockAgent = new MockAgent();
+mockAgent.disableNetConnect();
+setGlobalDispatcher(mockAgent);
+
+export { mockAgent };
 
 /**
  * A crappy mock interaction for testing that satisfies an instanceof check
  * without any of the actual safety checks.
  */
-export default class MockCommandInteraction extends ChatInputCommandInteraction {
+export class MockCommandInteraction extends ChatInputCommandInteraction {
 	private is_command: boolean;
 
 	constructor(args: {

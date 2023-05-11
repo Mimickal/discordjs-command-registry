@@ -8,17 +8,10 @@
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
 import { expect } from 'chai';
-import { MockAgent, setGlobalDispatcher } from 'undici'; // From discord.js
-
-import { Options } from '../src';
-import MockCommandInteraction from './mock';
 import { Application, Guild, GuildEmoji } from 'discord.js';
 
-// discord.js uses undici for HTTP requests, so we piggyback off of that
-// transitive dependency to mock those requests in testing.
-const mockAgent = new MockAgent();
-mockAgent.disableNetConnect();
-setGlobalDispatcher(mockAgent);
+import { Options } from '../src';
+import { mockAgent, MockCommandInteraction } from './mock';
 
 describe('Option resolvers', function() {
 	const TEST_OPT_NAME = 'test_opt';
