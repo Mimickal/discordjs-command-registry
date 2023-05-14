@@ -11,7 +11,7 @@ import * as Discord from 'discord.js';
 import { Mixin } from 'ts-mixer';
 
 /** The function called during command execution. */
-type Handler = (interaction: Discord.ChatInputCommandInteraction) => any;
+export type Handler = (interaction: Discord.CommandInteraction) => unknown;
 
 /**
  * Mixin that adds the ability to set and store a command handler function.

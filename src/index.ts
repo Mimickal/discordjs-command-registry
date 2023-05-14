@@ -14,7 +14,10 @@ export {
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
+
 import * as Options from './options';
+import SlashCommandRegistry from './registry';
 export {
 	Options,
+	SlashCommandRegistry,
 };
