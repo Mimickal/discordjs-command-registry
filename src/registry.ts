@@ -12,6 +12,8 @@ import {
 	ChatInputCommandInteraction,
 	ContextMenuCommandInteraction,
 	DiscordAPIError,
+	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
+	SlashCommandBuilder as DiscordSlashCommandBuilder,
 	REST,
 	Routes,
 	Snowflake,
@@ -21,9 +23,11 @@ import {
 } from 'discord.js';
 
 import {
+	assertReturnOfBuilder,
 	BuilderInput,
 	ContextMenuCommandBuilder,
 	Handler,
+	resolveBuilder,
 	SlashCommandBuilder,
 	SlashCommandBuilderReturn,
 	SlashCommandSubcommandBuilder,
@@ -100,16 +104,12 @@ export default class SlashCommandRegistry {
 	 * @throws If input does not resolve to a SlashCommandBuilder.
 	 * @return Instance so we can chain calls.
 	 */
-	addCommand(input: BuilderInput<SlashCommandBuilder>): this {
-		const builder = (typeof input === 'function')
-			? input(new SlashCommandBuilder())
-			: input;
-
-		if (!(builder instanceof SlashCommandBuilder)) {
-			throw new Error(
-				`input did not resolve to a ${SlashCommandBuilder.name}. Got ${builder}`
-			);
-		}
+	addCommand(input: BuilderInput<SlashCommandBuilderReturn>): this {
+		const builder = resolveBuilder(input, SlashCommandBuilder);
+		assertReturnOfBuilder(builder,
+			SlashCommandBuilder,
+			DiscordSlashCommandBuilder
+		);
 
 		this.#command_map.set(builder.name, builder);
 		return this;
@@ -125,15 +125,11 @@ export default class SlashCommandRegistry {
 	 * @returns Instance so we can chain calls.
 	 */
 	addContextMenuCommand(input: BuilderInput<ContextMenuCommandBuilder>): this {
-		const builder = (typeof input === 'function')
-			? input(new ContextMenuCommandBuilder())
-			: input;
-
-		if (!(builder instanceof ContextMenuCommandBuilder)) {
-			throw new Error(
-				`input did not resolve to a ${ContextMenuCommandBuilder.name}. Got ${builder}`
-			);
-		}
+		const builder = resolveBuilder(input, ContextMenuCommandBuilder);
+		assertReturnOfBuilder(builder,
+			ContextMenuCommandBuilder,
+			DiscordContextMenuCommandBuilder,
+		);
 
 		this.#command_map.set(builder.name, builder);
 		return this;

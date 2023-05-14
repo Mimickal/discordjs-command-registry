@@ -10,6 +10,11 @@
 import chai, { expect } from 'chai';
 import promised from 'chai-as-promised';
 chai.use(promised);
+import {
+	DiscordAPIError,
+	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
+	SlashCommandBuilder as DiscordSlashCommandBuilder,
+} from 'discord.js';
 
 import {
 	ContextMenuCommandBuilder,
@@ -20,7 +25,6 @@ import {
 } from '../src';
 
 import { MockCommandInteraction, mockAgent } from './mock';
-import { DiscordAPIError } from 'discord.js';
 
 
 describe(SlashCommandRegistry.name, function() {
@@ -41,6 +45,15 @@ describe(new SlashCommandRegistry().addCommand.name, function() {
 		// @ts-expect-error Testing underlying JS safeties
 		expect(() => registry.addCommand('thing')).to.throw(
 			Error, 'input did not resolve to a SlashCommandBuilder. Got thing'
+		);
+	});
+
+	it('value must be OUR builder', function() {
+		const builder = new DiscordSlashCommandBuilder();
+		// @ts-expect-error Testing underlying JS safeties
+		expect(() => registry.addCommand(builder)).to.throw(
+			Error,
+			'Use SlashCommandBuilder from discord-command-registry, not discord.js'
 		);
 	});
 
@@ -75,6 +88,15 @@ describe(new SlashCommandRegistry().addContextMenuCommand.name, function() {
 		// @ts-expect-error Testing underlying JS safeties
 		expect(() => registry.addContextMenuCommand('thing')).to.throw(
 			Error, 'input did not resolve to a ContextMenuCommandBuilder. Got thing'
+		);
+	});
+
+	it('value must be OUR builder', function() {
+		const builder = new DiscordContextMenuCommandBuilder();
+		// @ts-expect-error Testing underlying JS safeties
+		expect(() => registry.addContextMenuCommand(builder)).to.throw(
+			Error,
+			'Use ContextMenuCommandBuilder from discord-command-registry, not discord.js'
 		);
 	});
 

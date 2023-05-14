@@ -42,7 +42,7 @@ export type Handler = (interaction: Discord.CommandInteraction) => unknown;
  * This implementation matches the pattern used in `@discordjs/builders`
  * https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/SlashCommandBuilder.ts
  */
-export class CommandHandlerMixin { // NOTE: exported for test only
+class CommandHandlerMixin {
 	/** The function called when this command is executed. */
 	public readonly handler: Handler | undefined;
 
@@ -135,7 +135,7 @@ function addThing<
 	Parent: new () => P,
 ): S {
 	validateMaxOptionsLength(self.options);
-	const result = typeof input === 'function' ? input(new Class()) : input;
+	const result = resolveBuilder(input, Class);
 	assertReturnOfBuilder(result, Class, Parent);
 	self.options.push(result);
 	return self;
@@ -145,17 +145,24 @@ function addThing<
  * Adapted from
  * https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/Assertions.ts#L68
  */
-function assertReturnOfBuilder<T, P>(
+export function assertReturnOfBuilder<T, P>(
 	input: unknown,
 	ExpectedInstanceOf: new () => T,
 	ParentInstanceOf: new () => P,
 ): asserts input is T {
-	if (input instanceof ParentInstanceOf && !(input instanceof ExpectedInstanceOf)) {
-		throw new Error(`Use ${ExpectedInstanceOf.name} from ${pack_name}, not discord.js`);
+	if (!(input instanceof ExpectedInstanceOf)) {
+		throw new Error(input instanceof ParentInstanceOf
+			? `Use ${ExpectedInstanceOf.name} from ${pack_name}, not discord.js`
+			: `input did not resolve to a ${ExpectedInstanceOf.name}. Got ${input}`
+		);
 	}
-
-	s.instance(ExpectedInstanceOf).parse(input);
 }
+
+/** Resolves {@link BuilderInput} values to their final form. */
+export function resolveBuilder<T>(input: BuilderInput<T>, Class: new() => T): T {
+	return input instanceof Function ? input(new Class()) : input;
+}
+
 /**
  * Stolen directly from
  * https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/Assertions.ts#L33
