@@ -89,7 +89,7 @@ export class MockCommandInteraction extends ChatInputCommandInteraction {
 		Reflect.set(this.options, '_subcommand', args.subcommand);
 	}
 
-	isCommand(): boolean {
+	isChatInputCommand(): boolean {
 		return this.is_command;
 	}
 }

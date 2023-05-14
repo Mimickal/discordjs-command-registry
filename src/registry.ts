@@ -21,18 +21,18 @@ import {
 } from 'discord.js';
 
 import {
+	BuilderInput,
 	ContextMenuCommandBuilder,
 	Handler,
 	SlashCommandBuilder,
+	SlashCommandBuilderReturn,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
 import { API_VERSION } from './constants';
 
-/** Either a Builder or a function that returns a Builder. */
-type BuilderInput<T> = T | ((builder: T) => T);
 /** A top-level command builder. */
-type TopLevelBuilder = SlashCommandBuilder | ContextMenuCommandBuilder;
+type TopLevelBuilder = SlashCommandBuilderReturn | ContextMenuCommandBuilder;
 
 /** Optional parameters for registering commands. */
 interface RegisterOpts {
@@ -174,7 +174,7 @@ export default class SlashCommandRegistry {
 	 * @param id The Discord guild ID.
 	 * @returns Instance so we can chain calls.
 	 */
-	setGuildId(id: Snowflake): this {
+	setGuildId(id: Snowflake | null): this {
 		this.guild_id = id;
 		return this;
 	}
@@ -313,7 +313,7 @@ export default class SlashCommandRegistry {
 	 *     **NOTE**: This is the `DiscordAPIError` from the `@discordjs/rest`
 	 *     package, *not* the `discord.js` package.
 	 */
-	async registerCommands(options: RegisterOpts): Promise<unknown> {
+	async registerCommands(options?: RegisterOpts): Promise<unknown> {
 		options = options ?? {};
 
 		if (options.token) {

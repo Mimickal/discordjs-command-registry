@@ -17,7 +17,7 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm test",
     "test": "mocha test/*.test.ts",
-    "test:coverage": "nyc --reporter=text mocha test/*"
+    "test:coverage": "nyc --reporter=text mocha test/*.test.ts"
   },
   "homepage": "https://www.npmjs.com/package/discord-command-registry",
   "repository": {
@@ -44,7 +44,9 @@
     "discord.js": "^14"
   },
   "devDependencies": {
+    "@sapphire/shapeshift": "^3.9.0",
     "@types/chai": "^4.3.5",
+    "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^10.0.1",
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
