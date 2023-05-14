@@ -37,6 +37,21 @@ export type BuilderInput<T> = T | ((thing: T) => T);
 export type Handler = (interaction: Discord.CommandInteraction) => unknown;
 
 /**
+ * Discord.js builders are not designed to be grouped together in a collection.
+ * This union represents any possible end value for an individual command's
+ * builder.
+ */
+export type SlashCommandBuilderReturn =
+	| SlashCommandBuilder
+	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+	| SlashCommandSubcommandsOnlyBuilder;
+
+type SlashCommandSubcommandsOnlyBuilder = Omit<
+	SlashCommandBuilder,
+	Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
+>;
+
+/**
  * Mixin that adds the ability to set and store a command handler function.
  *
  * This implementation matches the pattern used in `@discordjs/builders`
@@ -69,7 +84,9 @@ export class SlashCommandBuilder extends Mixin(
 ) {
 	// @ts-ignore We want to force this to only accept our version of the
 	// builder with .setHandler.
-	addSubcommand(input: BuilderInput<SlashCommandSubcommandBuilder>): this {
+	addSubcommand(
+		input: BuilderInput<SlashCommandSubcommandBuilder>
+	): SlashCommandSubcommandsOnlyBuilder {
 		return addThing(this, input,
 			SlashCommandSubcommandBuilder,
 			Discord.SlashCommandSubcommandBuilder
@@ -78,7 +95,9 @@ export class SlashCommandBuilder extends Mixin(
 
 	// @ts-ignore We want to force this to only accept our version of the
 	// builder with .setHandler.
-	addSubcommandGroup(input: BuilderInput<SlashCommandSubcommandGroupBuilder>): this {
+	addSubcommandGroup(
+		input: BuilderInput<SlashCommandSubcommandGroupBuilder>
+	): SlashCommandSubcommandsOnlyBuilder {
 		return addThing(this, input,
 			SlashCommandSubcommandGroupBuilder,
 			Discord.SlashCommandSubcommandGroupBuilder,
@@ -104,21 +123,6 @@ export class SlashCommandSubcommandBuilder extends Mixin(
 	Discord.SlashCommandSubcommandBuilder,
 	CommandHandlerMixin,
 ) {}
-
-/**
- * Discord.js builders are not designed to be grouped together in a collection.
- * This union represents any possible end value for an individual command's
- * builder.
- */
-export type SlashCommandBuilderReturn =
-	| SlashCommandBuilder
-	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-	| SlashCommandSubcommandsOnlyBuilder;
-
-type SlashCommandSubcommandsOnlyBuilder = Omit<
-	SlashCommandBuilder,
-	Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
->;
 
 /**
  * Some magic to de-duplicate our overridden addWhatever methods.
