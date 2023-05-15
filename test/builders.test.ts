@@ -12,6 +12,7 @@ import * as Discord from 'discord.js';
 
 import {
 	ContextMenuCommandBuilder,
+	SlashCommandCustomOption,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
@@ -78,5 +79,51 @@ describe('Builders require our overridden classes', function() {
 			Error,
 			'Use SlashCommandSubcommandGroupBuilder from discord-command-registry, not discord.js'
 		)
+	});
+});
+
+describe('Builders support our custom option resolvers', function() {
+	const TEST_NAME = 'test_name';
+	const TEST_DESC = 'test command description';
+	function makeOpt(opt: SlashCommandCustomOption): SlashCommandCustomOption {
+		return opt
+			.setName(TEST_NAME)
+			.setDescription(TEST_DESC)
+			.setRequired(true);
+	}
+
+	Array.from([
+		SlashCommandBuilder,
+		SlashCommandSubcommandBuilder,
+	]).forEach(Class => {
+		function makeBuilder() {
+			return new Class()
+				.setName('ignored')
+				.setDescription('ignored');
+		}
+
+		it(`${Class.name}.${new Class().addApplicationOption.name}`, function() {
+			const builder = makeBuilder().addApplicationOption(makeOpt);
+			expect(builder.options[0].toJSON()).to.contain({
+				name: TEST_NAME,
+				description: TEST_DESC,
+				min_length: 18,
+				max_length: 20,
+				required: true,
+				type: Discord.ApplicationCommandOptionType.String,
+			});
+		});
+
+		it(`${Class.name}.${new Class().addEmojiOption.name}`, function() {
+			const builder = makeBuilder().addEmojiOption(makeOpt);
+			expect(builder.options[0].toJSON()).to.contain({
+				name: TEST_NAME,
+				description: TEST_DESC,
+				min_length: 1,
+				max_length: 32,
+				required: true,
+				type: Discord.ApplicationCommandOptionType.String,
+			});
+		});
 	});
 });

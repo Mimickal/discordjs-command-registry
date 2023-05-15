@@ -59,9 +59,8 @@ export async function getApplication(
  *   contains an emoji.
  * @param opt_name The string option containing the Emoji.
  * @param required Whether to throw an error if the option is not found.
- * @return {GuildEmoji|String|null} The resolved emoji as a Discord.js
- *   GuildEmoji object for custom emojis, as a String for built-in emojis, or
- *   null if not found.
+ * @return The resolved emoji as a Discord.js `GuildEmoji` object for custom
+ *   emojis, as a String for built-in emojis, or null if not found.
  */
 export function getEmoji(
 	interaction: ChatInputCommandInteraction,
@@ -87,4 +86,3 @@ export function getEmoji(
 
 	return null;
 }
-

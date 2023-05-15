@@ -11,6 +11,7 @@ export * from '@discordjs/builders'; // Forward utils and stuff
 export {
 	ContextMenuCommandBuilder,
 	SlashCommandBuilder,
+	SlashCommandCustomOption,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';

@@ -24,6 +24,9 @@
 // versions of the classes, and do a wee bit of (safe) @ts-ignore-ing to change
 // the parameter type of some inherited methods.
 // Most of what follows is satisfying TypeScript's type checker.
+//
+// We use the same "mixin" pattern discord.js uses in `@discordjs/builders`
+// https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/SlashCommandBuilder.ts
 
 import * as Discord from 'discord.js';
 import { Mixin } from 'ts-mixer';
@@ -35,28 +38,50 @@ const { name: pack_name } = require('../package.json');
 export type BuilderInput<T> = T | ((thing: T) => T);
 /** The function called during command execution. */
 export type Handler = (interaction: Discord.CommandInteraction) => unknown;
-
-/**
- * Discord.js builders are not designed to be grouped together in a collection.
- * This union represents any possible end value for an individual command's
- * builder.
- */
-export type SlashCommandBuilderReturn =
-	| SlashCommandBuilder
-	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-	| SlashCommandSubcommandsOnlyBuilder;
-
-type SlashCommandSubcommandsOnlyBuilder = Omit<
-	SlashCommandBuilder,
-	Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
+/** A string option with the length set internally. */
+export type SlashCommandCustomOption = Omit<Discord.SlashCommandStringOption,
+	'setMinLength' | 'setMaxLength'
 >;
 
-/**
- * Mixin that adds the ability to set and store a command handler function.
- *
- * This implementation matches the pattern used in `@discordjs/builders`
- * https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/SlashCommandBuilder.ts
- */
+/** Mixin that adds builder support for our additional custom options. */
+class MoreOptionsMixin extends Discord.SharedSlashCommandOptions {
+	/**
+	 * Adds an Application option.
+	 *
+	 * @param input Either a string builder or a function that returns a builder.
+	 */
+	addApplicationOption(input: BuilderInput<SlashCommandCustomOption>): this {
+		const result = resolveBuilder(input, Discord.SlashCommandStringOption);
+
+		// Discord Application ID length
+		(result as Discord.SlashCommandStringOption)
+			.setMinLength(18)
+			.setMaxLength(20);
+
+		return addThing(this, result, Discord.SlashCommandStringOption);
+	}
+
+	/**
+	 * Adds an Emoji option. This appears as a string option that will accept
+	 * a string containing an emoji ID, emoji name, or emoji literal.
+	 *
+	 * @param input Either a string builder or a function that returns a builder.
+	 */
+	addEmojiOption(input: BuilderInput<SlashCommandCustomOption>): this {
+		const result = resolveBuilder(input, Discord.SlashCommandStringOption);
+
+		// Emoji literals are 1 or more characters.
+		// Emoji names are 1 to 32 characters.
+		// Emoji IDs are somewhere in between, like 18 to 20.
+		(result as Discord.SlashCommandStringOption)
+			.setMinLength(1)
+			.setMaxLength(32);
+
+		return addThing(this, result, Discord.SlashCommandStringOption);
+	}
+}
+
+/** Mixin that adds the ability to set and store a command handler function. */
 class CommandHandlerMixin {
 	/** The function called when this command is executed. */
 	public readonly handler: Handler | undefined;
@@ -72,15 +97,33 @@ class CommandHandlerMixin {
 	}
 }
 
+/**
+ * Discord.js builders are not designed to be grouped together in a collection.
+ * This union represents any possible end value for an individual command's
+ * builder.
+ */
+export type SlashCommandBuilderReturn =
+	| SlashCommandBuilder
+	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+	| SlashCommandSubcommandsOnlyBuilder;
+
+type SlashCommandSubcommandsOnlyBuilder = Omit<SlashCommandBuilder,
+	| Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
+	| keyof MoreOptionsMixin
+>;
+
+// NOTE: it's important that Discord's built-ins are the last Mixin in the list!
+// Otherwise, we run the risk of stepping on field initialization.
 
 export class ContextMenuCommandBuilder extends Mixin(
-	Discord.ContextMenuCommandBuilder,
 	CommandHandlerMixin,
+	Discord.ContextMenuCommandBuilder,
 ) {}
 
 export class SlashCommandBuilder extends Mixin(
-	Discord.SlashCommandBuilder,
 	CommandHandlerMixin,
+	MoreOptionsMixin,
+	Discord.SlashCommandBuilder,
 ) {
 	// @ts-ignore We want to force this to only accept our version of the
 	// builder with .setHandler.
@@ -106,8 +149,8 @@ export class SlashCommandBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandGroupBuilder extends Mixin(
-	Discord.SlashCommandSubcommandGroupBuilder,
 	CommandHandlerMixin,
+	Discord.SlashCommandSubcommandGroupBuilder,
 ) {
 	// @ts-ignore We want to force this to only accept our version of the
 	// builder with .setHandler.
@@ -120,8 +163,9 @@ export class SlashCommandSubcommandGroupBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandBuilder extends Mixin(
-	Discord.SlashCommandSubcommandBuilder,
+	MoreOptionsMixin,
 	CommandHandlerMixin,
+	Discord.SlashCommandSubcommandBuilder,
 ) {}
 
 /**
@@ -136,7 +180,7 @@ function addThing<
 	self: S,
 	input: BuilderInput<T>,
 	Class: new () => T,
-	Parent: new () => P,
+	Parent?: new () => P,
 ): S {
 	validateMaxOptionsLength(self.options);
 	const result = resolveBuilder(input, Class);
@@ -152,10 +196,10 @@ function addThing<
 export function assertReturnOfBuilder<T, P>(
 	input: unknown,
 	ExpectedInstanceOf: new () => T,
-	ParentInstanceOf: new () => P,
+	ParentInstanceOf?: new () => P,
 ): asserts input is T {
 	if (!(input instanceof ExpectedInstanceOf)) {
-		throw new Error(input instanceof ParentInstanceOf
+		throw new Error(ParentInstanceOf && input instanceof ParentInstanceOf
 			? `Use ${ExpectedInstanceOf.name} from ${pack_name}, not discord.js`
 			: `input did not resolve to a ${ExpectedInstanceOf.name}. Got ${input}`
 		);
