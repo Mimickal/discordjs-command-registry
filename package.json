@@ -8,7 +8,8 @@
     "node": ">=16.9.0"
   },
   "bin": {
-    "register": "./lib/register.js"
+    "register": "./lib/register.js",
+    "register-ts": "ts-node ./src/register.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -36,7 +37,8 @@
     "library"
   ],
   "files": [
-    "lib/*"
+    "lib/*",
+    "src/register.ts"
   ],
   "author": "Mimickal",
   "license": "LGPL-3.0",
