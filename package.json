@@ -36,6 +36,7 @@
     "registry",
     "library"
   ],
+  "type": "module",
   "files": [
     "lib/*",
     "src/register.ts"
