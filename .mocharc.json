@@ -1,3 +1,4 @@
 {
-	"loader": "ts-node/esm"
+	"loader": "ts-node/esm",
+	"experimental-specifier-resolution": "node"
 }

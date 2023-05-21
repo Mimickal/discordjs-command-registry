@@ -2,11 +2,12 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
 		"lib": ["ES2022"],
-		"module": "ES2015",
+		"module": "ES2020",
 		"target": "ES2022",
 
 		"moduleResolution": "node",
 		"esModuleInterop": true,
+		"resolveJsonModule": true,
 		"strict": true,
 
 		"outDir": "lib",
