@@ -8,8 +8,7 @@
     "node": ">=16.9.0"
   },
   "bin": {
-    "register": "./lib/register.js",
-    "register-ts": "ts-node ./src/register.ts"
+    "register": "./lib/register.js"
   },
   "scripts": {
     "build": "tsc",

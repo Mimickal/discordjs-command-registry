@@ -128,11 +128,24 @@ If you're using TypeScript and aren't transpiling to JavaScript (e.g. running
 your bot with `ts-node`), you can still use this script. This library ships
 with a separate, stand-alone TypeScript version of this register script.
 
-(Note: this expects `ts-node` to be available)
+You need at least the following in your `tsconfig.json`:
+```json
+{
+    "compilerOptions": {
+        "module": "ES6",
+        "target": "ES6",
+        "moduleResolution": "node"
+    },
+    "ts-node": {
+        "esm": true,
+        "skipIgnore": true
+    }
+}
+```
 
+Then you can run the register script from `node_modules` like this:
 ```sh
-# Note: register-ts instead of register
-npm exec register-ts src/commands.ts
+npm exec ts-node node_modules/discord-command-registry/src/register.ts
 ```
 
 ### Using `SlashCommandRegistry.registerCommands()`

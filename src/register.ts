@@ -9,8 +9,11 @@
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
 import { lstatSync, readFileSync } from 'fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'path';
 import { Command } from 'commander';
+
+const require = createRequire(import.meta.url);
 
 const cliArgs = new Command()
 	.description([
