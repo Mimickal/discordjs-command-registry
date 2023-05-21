@@ -162,7 +162,6 @@ describe(new SlashCommandRegistry().toJSON.name, function() {
 				default_permission: undefined,
 				default_member_permissions: undefined,
 				dm_permission: undefined,
-				handler: undefined,
 			},
 			{
 				name: 'test2',
@@ -174,7 +173,6 @@ describe(new SlashCommandRegistry().toJSON.name, function() {
 				dm_permission: undefined,
 				name_localizations: undefined,
 				nsfw: undefined,
-				handler: undefined,
 			},
 			{
 				name: 'test3',
@@ -186,7 +184,6 @@ describe(new SlashCommandRegistry().toJSON.name, function() {
 				dm_permission: undefined,
 				name_localizations: undefined,
 				nsfw: undefined,
-				handler: undefined,
 			},
 		];
 	});

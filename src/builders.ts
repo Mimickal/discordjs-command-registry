@@ -27,14 +27,11 @@
 //
 // We use the same "mixin" pattern discord.js uses in `@discordjs/builders`
 // https://github.com/discordjs/discord.js/blob/14.9.0/packages/builders/src/interactions/slashCommands/SlashCommandBuilder.ts
-import { createRequire } from 'node:module';
 
 import * as Discord from 'discord.js';
 import { Mixin } from 'ts-mixer';
 import { s } from '@sapphire/shapeshift';
 
-// https://stackoverflow.com/a/70106896
-const require = createRequire(import.meta.url);
 const { name: pack_name } = require('../package.json');
 
 /** Either a Builder or a function that returns a Builder. */
