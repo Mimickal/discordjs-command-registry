@@ -8,19 +8,19 @@
  * License v3.0. See LICENSE.md or
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
-const { lstatSync, readFileSync } = require('fs');
-const { resolve } = require('path');
-const { Command } = require('commander');
+import { lstatSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+import { Command } from 'commander';
 
 const cliArgs = new Command()
 	.description([
-		'Registers a SlashCommandRegistry\'s commands with Discord\'s API.',
+		"Registers a SlashCommandRegistry's commands with Discord's API.",
 		'This only needs to be done once after commands are updated. Updating',
 		'commands globally can take some time to propagate! For testing, use',
-		'guild-specific commands (specify \'guild\').',
+		'guild-specific commands (specify "guild").',
 	].join(' '))
 	.argument('<registry>',
-		'Path to a JavaScript file whose default export is a SlashCommandRegistry.',
+		'Path to a JS (or TS) file whose default export is a SlashCommandRegistry.',
 		(path) => require(resolve(path)),
 	)
 	.option('-a, --app <string>', 'The Discord bot application ID.')
@@ -76,7 +76,8 @@ console.info([
 	'...',
 ].join(''));
 
-registry.registerCommands({
+// A hack to deal with how "require" imports TypeScript modules with default exports.
+(registry.default ?? registry).registerCommands({
 	application_id,
 	guild,
 	token: (
@@ -84,7 +85,7 @@ registry.registerCommands({
 		cliArgs.getOptionValue('config')?.token
 	),
 	commands: cliArgs.getOptionValue('names'),
-}).then(data => {
+}).then((data: unknown) => {
 	console.debug(data);
 	console.debug();
 	console.info('Registration successful!', guild
@@ -92,7 +93,7 @@ registry.registerCommands({
 		: 'Commands may take some time to globally propagate.'
 	);
 
-}).catch(err => {
+}).catch((err: Error) => {
 	console.error('Error registering commands!\n\n', err);
 	process.exit(1);
 });

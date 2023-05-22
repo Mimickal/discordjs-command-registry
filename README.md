@@ -4,6 +4,8 @@
 src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 </a>
 
+_Now with 100% more TypeScript!_
+
 _**NOTE: version 2.x of this library supports discord.js v14. If you still need
 v13 support, use an older 1.x version of this library.**_
 
@@ -40,7 +42,7 @@ It also supports some additional "option" types
 
 This library adds a new builder `SlashCommandRegistry` that serves as the
 entry point for defining all of your commands. Existing builders from
-[@discordjs/builders](https://www.npmjs.com/package/@discordjs/builders)
+[`@discordjs/builders`](https://www.npmjs.com/package/@discordjs/builders)
 still work as you expect, but there's a new function added to all of them:
 `.setHandler(handler)`. The handler is a callback function that expects a
 Discord.js `Interaction` instance. The `SlashCommandRegistry` will figure out
@@ -118,6 +120,32 @@ npm exec register src/commands.js -- --config path/to/my/config.json
 # avoid printing your token in your shell.
 npm exec register src/commands.js -- --app 1234 --token path/to/token_file
 npm exec register src/commands.js -- --app 1234 --token "my token text"
+```
+
+### Using the script with TypeScript
+
+If you're using TypeScript and aren't transpiling to JavaScript (e.g. running
+your bot with `ts-node`), you can still use this script. This library ships
+with a separate, stand-alone TypeScript version of this register script.
+
+Then you can run the register script from `node_modules` like this:
+```sh
+npx ts-node --esm --skipIgnore --logError --compilerOptions '{"esModuleInterop":true}' node_modules/discord-command-registry/src/register.ts
+```
+
+If you'd rather remove all the `ts-node` flags, you can also specify these
+options in your `tsconfig.json`, like this:
+```json
+{
+    "ts-node": {
+        "esm": true,
+        "skipIgnore": true,
+        "logError": true,
+        "compilerOptions": {
+            "esModuleInterop": true,
+        }
+    }
+}
 ```
 
 ### Using `SlashCommandRegistry.registerCommands()`
@@ -210,14 +238,19 @@ some flexibility if you have many commands that all use similar code.
 ## Additional option types
 
 Discord (and Discord.js) does not currently support command options for things
-like Applications. This library provides functions to approximate these
-additional option types:
+like Applications. This library provides builders and functions to approximate
+these additional option types:
 
+(Note: these are registered as string options under the hood)
+
+- `SlashCommandCustomOption`
+- `addApplicationOption(custom_option)`
+- `addEmojiOption(custom_option)`
 - `getApplication(interaction, option_name, required=false)`
 - `getEmoji(interaction, option_name, required=false)`
 
-To use these, register the option as a string option, then use the
-`Options.getX(...)` helpers to retrieve the value.
+To use these, register the option using the appropriate custom builder, then
+use the `Options.getX(...)` helpers to retrieve the value.
 
 For example, this is a functional example of an Application option:
 
@@ -232,7 +265,7 @@ const commands = new SlashCommandRegistry()
         .addName('mycmd')
         .addDescription('Example command that has an application option')
         // Add your application option as a string option
-        .addStringOption(option => option
+        .addApplicationOption(option => option
             .setName('app')
             .setDescription('An application ID')
         )

@@ -4,6 +4,7 @@
 # Node things
 node_modules
 .nyc_output
+lib
 
 # My dev things
 todo
