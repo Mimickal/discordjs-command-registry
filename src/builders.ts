@@ -37,7 +37,7 @@ const { name: PACKAGE_NAME } = require('../package.json');
 /** Either a Builder or a function that returns a Builder. */
 export type BuilderInput<T> = T | ((thing: T) => T);
 /** The function called during command execution. */
-export type Handler = (interaction: Discord.CommandInteraction) => unknown;
+export type Handler<T extends Discord.CommandInteraction> = (interaction: T) => unknown;
 /** A string option with the length set internally. */
 export type SlashCommandCustomOption = Omit<Discord.SlashCommandStringOption,
 	'setMinLength' | 'setMaxLength'
@@ -82,12 +82,12 @@ class MoreOptionsMixin extends Discord.SharedSlashCommandOptions {
 }
 
 /** Mixin that adds the ability to set and store a command handler function. */
-class CommandHandlerMixin {
+class CommandHandlerMixin<T extends Discord.CommandInteraction> {
 	/** The function called when this command is executed. */
-	public readonly handler: Handler | undefined;
+	public readonly handler: Handler<T> | undefined;
 
 	/** Sets the function called when this command is executed. */
-	setHandler(handler: Handler): this {
+	setHandler(handler: Handler<T>): this {
 		if (typeof handler !== 'function') {
 			throw new Error(`handler was '${typeof handler}', expected 'function'`);
 		}
@@ -116,12 +116,15 @@ type SlashCommandSubcommandsOnlyBuilder = Omit<SlashCommandBuilder,
 // Otherwise, we run the risk of stepping on field initialization.
 
 export class ContextMenuCommandBuilder extends Mixin(
-	CommandHandlerMixin,
+	// This double mixin is dumb, but it's the only way to accept both
+	// ContextMenuCommandInteraction types.
+	CommandHandlerMixin<Discord.UserContextMenuCommandInteraction>,
+	CommandHandlerMixin<Discord.MessageContextMenuCommandInteraction>,
 	Discord.ContextMenuCommandBuilder,
 ) {}
 
 export class SlashCommandBuilder extends Mixin(
-	CommandHandlerMixin,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	MoreOptionsMixin,
 	Discord.SlashCommandBuilder,
 ) {
@@ -149,7 +152,7 @@ export class SlashCommandBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandGroupBuilder extends Mixin(
-	CommandHandlerMixin,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandGroupBuilder,
 ) {
 	// @ts-ignore We want to force this to only accept our version of the
@@ -164,7 +167,7 @@ export class SlashCommandSubcommandGroupBuilder extends Mixin(
 
 export class SlashCommandSubcommandBuilder extends Mixin(
 	MoreOptionsMixin,
-	CommandHandlerMixin,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandBuilder,
 ) {}
 

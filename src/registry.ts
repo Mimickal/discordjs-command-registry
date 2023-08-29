@@ -10,6 +10,7 @@
 import {
 	BaseInteraction,
 	ChatInputCommandInteraction,
+	CommandInteraction,
 	ContextMenuCommandInteraction,
 	DiscordAPIError,
 	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
@@ -19,7 +20,6 @@ import {
 	Snowflake,
 	RESTPostAPIContextMenuApplicationCommandsJSONBody,
 	RESTPostAPIChatInputApplicationCommandsJSONBody,
-	CommandInteraction,
 } from 'discord.js';
 
 import {
@@ -77,7 +77,7 @@ export default class SlashCommandRegistry {
 	application_id: Snowflake | null = null;
 
 	/** The handler run for unrecognized commands. */
-	default_handler: Handler | null = null;
+	default_handler: Handler<CommandInteraction> | null = null;
 
 	/** A Discord guild ID used to restrict command registration to one guild. */
 	guild_id: Snowflake | null = null;
@@ -154,7 +154,7 @@ export default class SlashCommandRegistry {
 	 * @throws If handler is not a function.
 	 * @return Instance so we can chain calls.
 	 */
-	setDefaultHandler(handler: Handler): this {
+	setDefaultHandler(handler: Handler<CommandInteraction>): this {
 		if (typeof handler !== 'function') {
 			throw new Error(`handler was '${typeof handler}', expected 'function'`);
 		}
@@ -297,6 +297,11 @@ export default class SlashCommandRegistry {
 			builder_top.handler    ??
 			this.default_handler;
 
+		// @ts-expect-error Discord.js Interaction types are mutually exclusive,
+		// despite all extending BaseInteraction. We do our best to make sure
+		// each individual handler is the right type, but the union of all of
+		// them here resolves to "never".
+		// https://discord.com/channels/222078108977594368/824411059443204127/1145960025962066033
 		return handler ? handler(interaction) as T : undefined;
 	}
 

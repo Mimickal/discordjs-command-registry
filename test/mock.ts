@@ -71,6 +71,7 @@ export class MockCommandInteraction extends ChatInputCommandInteraction {
 				username: 'fake_test_user',
 				discriminator: '1234',
 				avatar: null,
+				global_name: null,
 			},
 		});
 

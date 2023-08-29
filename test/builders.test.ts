@@ -17,15 +17,29 @@ import {
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
+	SlashCommandRegistry,
 } from '../src';
 import { BuilderInput } from '../src/builders';
 
 type CanSetHandler = new () => {
-	setHandler: (handler: Handler) => unknown;
+	setHandler: (handler: Handler<Discord.CommandInteraction>) => unknown;
 }
 type CanAddSubCommand = new () => {
 	addSubcommand: (input: BuilderInput<SlashCommandSubcommandBuilder>) => unknown;
 };
+
+// These are static type tests to ensure Handler can accept all of these types.
+new SlashCommandRegistry()
+	.addContextMenuCommand(cmd => cmd
+		.setType(Discord.ApplicationCommandType.User)
+		.setHandler((int: Discord.UserContextMenuCommandInteraction) => {})
+		.setHandler((int: Discord.MessageContextMenuCommandInteraction) => {})
+	)
+	.addCommand(cmd => cmd
+		.setHandler((int: Discord.CommandInteraction) => {})
+		.setHandler((int: Discord.ChatInputCommandInteraction) => {})
+	)
+	.setDefaultHandler((int: Discord.CommandInteraction) => {})
 
 describe('Builders have setHandler() functions injected', function() {
 	Array.of<CanSetHandler>(
