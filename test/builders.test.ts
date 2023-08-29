@@ -12,12 +12,13 @@ import * as Discord from 'discord.js';
 
 import {
 	ContextMenuCommandBuilder,
+	Handler,
 	SlashCommandCustomOption,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from '../src';
-import { BuilderInput, Handler } from '../src/builders';
+import { BuilderInput } from '../src/builders';
 
 type CanSetHandler = new () => {
 	setHandler: (handler: Handler) => unknown;
