@@ -32,7 +32,7 @@ import * as Discord from 'discord.js';
 import { Mixin } from 'ts-mixer';
 import { s } from '@sapphire/shapeshift';
 
-const { name: pack_name } = require('../package.json');
+const { name: PACKAGE_NAME } = require('../package.json');
 
 /** Either a Builder or a function that returns a Builder. */
 export type BuilderInput<T> = T | ((thing: T) => T);
@@ -200,7 +200,7 @@ export function assertReturnOfBuilder<T, P>(
 ): asserts input is T {
 	if (!(input instanceof ExpectedInstanceOf)) {
 		throw new Error(ParentInstanceOf && input instanceof ParentInstanceOf
-			? `Use ${ExpectedInstanceOf.name} from ${pack_name}, not discord.js`
+			? `Use ${ExpectedInstanceOf.name} from ${PACKAGE_NAME}, not discord.js`
 			: `input did not resolve to a ${ExpectedInstanceOf.name}. Got ${input}`
 		);
 	}
