@@ -30,16 +30,29 @@ type CanAddSubCommand = new () => {
 
 // These are static type tests to ensure Handler can accept all of these types.
 new SlashCommandRegistry()
+	// Can accept all ContextMenuCommandInteraction types
 	.addContextMenuCommand(cmd => cmd
 		.setType(Discord.ApplicationCommandType.User)
 		.setHandler((int: Discord.UserContextMenuCommandInteraction) => {})
 		.setHandler((int: Discord.MessageContextMenuCommandInteraction) => {})
 	)
+	// Can accept ChatInputCommandInteractions
 	.addCommand(cmd => cmd
 		.setHandler((int: Discord.CommandInteraction) => {})
 		.setHandler((int: Discord.ChatInputCommandInteraction) => {})
 	)
+	// Can accept a fallback handler
 	.setDefaultHandler((int: Discord.CommandInteraction) => {})
+	// Can accept commands with options
+	.addCommand(cmd => cmd
+		.addChannelOption(opt => opt)
+	)
+	// Can accept subcommands with options
+	.addCommand(cmd => cmd
+		.addSubcommand(sub => sub
+			.addChannelOption(opt => opt)
+		)
+	)
 
 describe('Builders have setHandler() functions injected', function() {
 	Array.of<CanSetHandler>(

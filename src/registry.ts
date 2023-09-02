@@ -104,7 +104,7 @@ export default class SlashCommandRegistry {
 	 * @throws If input does not resolve to a SlashCommandBuilder.
 	 * @return Instance so we can chain calls.
 	 */
-	addCommand(input: BuilderInput<SlashCommandBuilderReturn>): this {
+	addCommand(input: BuilderInput<SlashCommandBuilder>): this {
 		const builder = resolveBuilder(input, SlashCommandBuilder);
 		assertReturnOfBuilder(builder,
 			SlashCommandBuilder,

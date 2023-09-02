@@ -44,7 +44,8 @@ export type SlashCommandCustomOption = Omit<Discord.SlashCommandStringOption,
 >;
 
 /** Mixin that adds builder support for our additional custom options. */
-class MoreOptionsMixin extends Discord.SharedSlashCommandOptions {
+class MoreOptionsMixin<ShouldOmitSubcommandFunctions = true>
+extends Discord.SharedSlashCommandOptions<ShouldOmitSubcommandFunctions> {
 	/**
 	 * Adds an Application option.
 	 *
@@ -125,25 +126,23 @@ export class ContextMenuCommandBuilder extends Mixin(
 
 export class SlashCommandBuilder extends Mixin(
 	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
-	MoreOptionsMixin,
+	MoreOptionsMixin<false>,
 	Discord.SlashCommandBuilder,
 ) {
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
-	addSubcommand(
-		input: BuilderInput<SlashCommandSubcommandBuilder>
-	): SlashCommandSubcommandsOnlyBuilder {
+	addSubcommand(input: BuilderInput<SlashCommandSubcommandBuilder>): this {
 		return addThing(this, input,
 			SlashCommandSubcommandBuilder,
 			Discord.SlashCommandSubcommandBuilder
 		);
 	}
 
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
 	addSubcommandGroup(
 		input: BuilderInput<SlashCommandSubcommandGroupBuilder>
-	): SlashCommandSubcommandsOnlyBuilder {
+	): this {
 		return addThing(this, input,
 			SlashCommandSubcommandGroupBuilder,
 			Discord.SlashCommandSubcommandGroupBuilder,
@@ -155,7 +154,7 @@ export class SlashCommandSubcommandGroupBuilder extends Mixin(
 	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandGroupBuilder,
 ) {
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
 	addSubcommand(input: BuilderInput<SlashCommandSubcommandBuilder>): this {
 		return addThing(this, input,
@@ -166,7 +165,7 @@ export class SlashCommandSubcommandGroupBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandBuilder extends Mixin(
-	MoreOptionsMixin,
+	MoreOptionsMixin<false>,
 	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandBuilder,
 ) {}
