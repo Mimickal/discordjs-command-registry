@@ -11,15 +11,15 @@ import {
 	BaseInteraction,
 	ChatInputCommandInteraction,
 	CommandInteraction,
+	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
 	ContextMenuCommandInteraction,
 	DiscordAPIError,
-	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
-	SlashCommandBuilder as DiscordSlashCommandBuilder,
 	REST,
-	Routes,
-	Snowflake,
-	RESTPostAPIContextMenuApplicationCommandsJSONBody,
 	RESTPostAPIChatInputApplicationCommandsJSONBody,
+	RESTPostAPIContextMenuApplicationCommandsJSONBody,
+	Routes,
+	SlashCommandBuilder as DiscordSlashCommandBuilder,
+	Snowflake,
 } from 'discord.js';
 
 import {
@@ -29,14 +29,12 @@ import {
 	Handler,
 	resolveBuilder,
 	SlashCommandBuilder,
-	SlashCommandBuilderReturn,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
 import { API_VERSION } from './constants';
 
-/** A top-level command builder. */
-type TopLevelBuilder = SlashCommandBuilderReturn | ContextMenuCommandBuilder;
+type TopLevelBuilder = ContextMenuCommandBuilder | SlashCommandBuilder
 
 /** Optional parameters for registering commands. */
 interface RegisterOpts {

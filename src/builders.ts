@@ -98,21 +98,6 @@ class CommandHandlerMixin<T extends Discord.CommandInteraction> {
 	}
 }
 
-/**
- * Discord.js builders are not designed to be grouped together in a collection.
- * This union represents any possible end value for an individual command's
- * builder.
- */
-export type SlashCommandBuilderReturn =
-	| SlashCommandBuilder
-	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-	| SlashCommandSubcommandsOnlyBuilder;
-
-type SlashCommandSubcommandsOnlyBuilder = Omit<SlashCommandBuilder,
-	| Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
-	| keyof MoreOptionsMixin
->;
-
 // NOTE: it's important that Discord's built-ins are the last Mixin in the list!
 // Otherwise, we run the risk of stepping on field initialization.
 
