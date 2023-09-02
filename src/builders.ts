@@ -32,19 +32,20 @@ import * as Discord from 'discord.js';
 import { Mixin } from 'ts-mixer';
 import { s } from '@sapphire/shapeshift';
 
-const { name: pack_name } = require('../package.json');
+const { name: PACKAGE_NAME } = require('../package.json');
 
 /** Either a Builder or a function that returns a Builder. */
 export type BuilderInput<T> = T | ((thing: T) => T);
 /** The function called during command execution. */
-export type Handler = (interaction: Discord.CommandInteraction) => unknown;
+export type Handler<T extends Discord.CommandInteraction> = (interaction: T) => unknown;
 /** A string option with the length set internally. */
 export type SlashCommandCustomOption = Omit<Discord.SlashCommandStringOption,
 	'setMinLength' | 'setMaxLength'
 >;
 
 /** Mixin that adds builder support for our additional custom options. */
-class MoreOptionsMixin extends Discord.SharedSlashCommandOptions {
+class MoreOptionsMixin<ShouldOmitSubcommandFunctions = true>
+extends Discord.SharedSlashCommandOptions<ShouldOmitSubcommandFunctions> {
 	/**
 	 * Adds an Application option.
 	 *
@@ -82,12 +83,12 @@ class MoreOptionsMixin extends Discord.SharedSlashCommandOptions {
 }
 
 /** Mixin that adds the ability to set and store a command handler function. */
-class CommandHandlerMixin {
+class CommandHandlerMixin<T extends Discord.CommandInteraction> {
 	/** The function called when this command is executed. */
-	public readonly handler: Handler | undefined;
+	public readonly handler: Handler<T> | undefined;
 
 	/** Sets the function called when this command is executed. */
-	setHandler(handler: Handler): this {
+	setHandler(handler: Handler<T>): this {
 		if (typeof handler !== 'function') {
 			throw new Error(`handler was '${typeof handler}', expected 'function'`);
 		}
@@ -97,50 +98,36 @@ class CommandHandlerMixin {
 	}
 }
 
-/**
- * Discord.js builders are not designed to be grouped together in a collection.
- * This union represents any possible end value for an individual command's
- * builder.
- */
-export type SlashCommandBuilderReturn =
-	| SlashCommandBuilder
-	| Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-	| SlashCommandSubcommandsOnlyBuilder;
-
-type SlashCommandSubcommandsOnlyBuilder = Omit<SlashCommandBuilder,
-	| Exclude<keyof Discord.SharedSlashCommandOptions, 'options'>
-	| keyof MoreOptionsMixin
->;
-
 // NOTE: it's important that Discord's built-ins are the last Mixin in the list!
 // Otherwise, we run the risk of stepping on field initialization.
 
 export class ContextMenuCommandBuilder extends Mixin(
-	CommandHandlerMixin,
+	// This double mixin is dumb, but it's the only way to accept both
+	// ContextMenuCommandInteraction types.
+	CommandHandlerMixin<Discord.UserContextMenuCommandInteraction>,
+	CommandHandlerMixin<Discord.MessageContextMenuCommandInteraction>,
 	Discord.ContextMenuCommandBuilder,
 ) {}
 
 export class SlashCommandBuilder extends Mixin(
-	CommandHandlerMixin,
-	MoreOptionsMixin,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
+	MoreOptionsMixin<false>,
 	Discord.SlashCommandBuilder,
 ) {
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
-	addSubcommand(
-		input: BuilderInput<SlashCommandSubcommandBuilder>
-	): SlashCommandSubcommandsOnlyBuilder {
+	addSubcommand(input: BuilderInput<SlashCommandSubcommandBuilder>): this {
 		return addThing(this, input,
 			SlashCommandSubcommandBuilder,
 			Discord.SlashCommandSubcommandBuilder
 		);
 	}
 
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
 	addSubcommandGroup(
 		input: BuilderInput<SlashCommandSubcommandGroupBuilder>
-	): SlashCommandSubcommandsOnlyBuilder {
+	): this {
 		return addThing(this, input,
 			SlashCommandSubcommandGroupBuilder,
 			Discord.SlashCommandSubcommandGroupBuilder,
@@ -149,10 +136,10 @@ export class SlashCommandBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandGroupBuilder extends Mixin(
-	CommandHandlerMixin,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandGroupBuilder,
 ) {
-	// @ts-ignore We want to force this to only accept our version of the
+	// @ts-expect-error We want to force this to only accept our version of the
 	// builder with .setHandler.
 	addSubcommand(input: BuilderInput<SlashCommandSubcommandBuilder>): this {
 		return addThing(this, input,
@@ -163,8 +150,8 @@ export class SlashCommandSubcommandGroupBuilder extends Mixin(
 }
 
 export class SlashCommandSubcommandBuilder extends Mixin(
-	MoreOptionsMixin,
-	CommandHandlerMixin,
+	MoreOptionsMixin<false>,
+	CommandHandlerMixin<Discord.ChatInputCommandInteraction>,
 	Discord.SlashCommandSubcommandBuilder,
 ) {}
 
@@ -200,7 +187,7 @@ export function assertReturnOfBuilder<T, P>(
 ): asserts input is T {
 	if (!(input instanceof ExpectedInstanceOf)) {
 		throw new Error(ParentInstanceOf && input instanceof ParentInstanceOf
-			? `Use ${ExpectedInstanceOf.name} from ${pack_name}, not discord.js`
+			? `Use ${ExpectedInstanceOf.name} from ${PACKAGE_NAME}, not discord.js`
 			: `input did not resolve to a ${ExpectedInstanceOf.name}. Got ${input}`
 		);
 	}

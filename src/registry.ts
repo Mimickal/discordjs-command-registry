@@ -10,16 +10,16 @@
 import {
 	BaseInteraction,
 	ChatInputCommandInteraction,
+	CommandInteraction,
+	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
 	ContextMenuCommandInteraction,
 	DiscordAPIError,
-	ContextMenuCommandBuilder as DiscordContextMenuCommandBuilder,
-	SlashCommandBuilder as DiscordSlashCommandBuilder,
 	REST,
-	Routes,
-	Snowflake,
-	RESTPostAPIContextMenuApplicationCommandsJSONBody,
 	RESTPostAPIChatInputApplicationCommandsJSONBody,
-	CommandInteraction,
+	RESTPostAPIContextMenuApplicationCommandsJSONBody,
+	Routes,
+	SlashCommandBuilder as DiscordSlashCommandBuilder,
+	Snowflake,
 } from 'discord.js';
 
 import {
@@ -29,14 +29,12 @@ import {
 	Handler,
 	resolveBuilder,
 	SlashCommandBuilder,
-	SlashCommandBuilderReturn,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
 import { API_VERSION } from './constants';
 
-/** A top-level command builder. */
-type TopLevelBuilder = SlashCommandBuilderReturn | ContextMenuCommandBuilder;
+type TopLevelBuilder = ContextMenuCommandBuilder | SlashCommandBuilder
 
 /** Optional parameters for registering commands. */
 interface RegisterOpts {
@@ -77,7 +75,7 @@ export default class SlashCommandRegistry {
 	application_id: Snowflake | null = null;
 
 	/** The handler run for unrecognized commands. */
-	default_handler: Handler | null = null;
+	default_handler: Handler<CommandInteraction> | null = null;
 
 	/** A Discord guild ID used to restrict command registration to one guild. */
 	guild_id: Snowflake | null = null;
@@ -104,7 +102,7 @@ export default class SlashCommandRegistry {
 	 * @throws If input does not resolve to a SlashCommandBuilder.
 	 * @return Instance so we can chain calls.
 	 */
-	addCommand(input: BuilderInput<SlashCommandBuilderReturn>): this {
+	addCommand(input: BuilderInput<SlashCommandBuilder>): this {
 		const builder = resolveBuilder(input, SlashCommandBuilder);
 		assertReturnOfBuilder(builder,
 			SlashCommandBuilder,
@@ -154,7 +152,7 @@ export default class SlashCommandRegistry {
 	 * @throws If handler is not a function.
 	 * @return Instance so we can chain calls.
 	 */
-	setDefaultHandler(handler: Handler): this {
+	setDefaultHandler(handler: Handler<CommandInteraction>): this {
 		if (typeof handler !== 'function') {
 			throw new Error(`handler was '${typeof handler}', expected 'function'`);
 		}
@@ -297,6 +295,11 @@ export default class SlashCommandRegistry {
 			builder_top.handler    ??
 			this.default_handler;
 
+		// @ts-expect-error Discord.js Interaction types are mutually exclusive,
+		// despite all extending BaseInteraction. We do our best to make sure
+		// each individual handler is the right type, but the union of all of
+		// them here resolves to "never".
+		// https://discord.com/channels/222078108977594368/824411059443204127/1145960025962066033
 		return handler ? handler(interaction) as T : undefined;
 	}
 

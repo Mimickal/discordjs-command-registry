@@ -12,19 +12,47 @@ import * as Discord from 'discord.js';
 
 import {
 	ContextMenuCommandBuilder,
+	Handler,
 	SlashCommandCustomOption,
 	SlashCommandBuilder,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
+	SlashCommandRegistry,
 } from '../src';
-import { BuilderInput, Handler } from '../src/builders';
+import { BuilderInput } from '../src/builders';
 
 type CanSetHandler = new () => {
-	setHandler: (handler: Handler) => unknown;
+	setHandler: (handler: Handler<Discord.CommandInteraction>) => unknown;
 }
 type CanAddSubCommand = new () => {
 	addSubcommand: (input: BuilderInput<SlashCommandSubcommandBuilder>) => unknown;
 };
+
+// These are static type tests to ensure Handler can accept all of these types.
+new SlashCommandRegistry()
+	// Can accept all ContextMenuCommandInteraction types
+	.addContextMenuCommand(cmd => cmd
+		.setType(Discord.ApplicationCommandType.User)
+		.setHandler((int: Discord.UserContextMenuCommandInteraction) => {})
+		.setHandler((int: Discord.MessageContextMenuCommandInteraction) => {})
+	)
+	// Can accept ChatInputCommandInteractions
+	.addCommand(cmd => cmd
+		.setHandler((int: Discord.CommandInteraction) => {})
+		.setHandler((int: Discord.ChatInputCommandInteraction) => {})
+	)
+	// Can accept a fallback handler
+	.setDefaultHandler((int: Discord.CommandInteraction) => {})
+	// Can accept commands with options
+	.addCommand(cmd => cmd
+		.addChannelOption(opt => opt)
+	)
+	// Can accept subcommands with options
+	.addCommand(cmd => cmd
+		.addSubcommand(sub => sub
+			.addChannelOption(opt => opt)
+		)
+	)
 
 describe('Builders have setHandler() functions injected', function() {
 	Array.of<CanSetHandler>(
