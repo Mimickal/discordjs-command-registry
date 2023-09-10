@@ -2,17 +2,17 @@
   "name": "discord-command-registry",
   "version": "2.2.1",
   "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "engines": {
     "node": ">=16.9.0"
   },
   "bin": {
-    "register": "./lib/register.js"
+    "register": "./lib/src/register.js"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rm lib/*",
+    "clean": "rm -r lib/*",
     "prepack": "npm run clean && npm run build && npm test",
     "prepare": "npm run build",
     "prepublishOnly": "npm test",

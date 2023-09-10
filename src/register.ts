@@ -11,6 +11,7 @@
 import { lstatSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { Command } from 'commander';
+import { version } from '../package.json';
 
 const cliArgs = new Command()
 	.description([
@@ -50,6 +51,7 @@ const cliArgs = new Command()
 				: value;
 		},
 	)
+	.version(version)
 	.parse(process.argv);
 
 const registry = cliArgs.processedArgs[0];
