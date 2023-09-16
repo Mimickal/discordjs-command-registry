@@ -1,18 +1,18 @@
 {
   "name": "discord-command-registry",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "engines": {
     "node": ">=16.9.0"
   },
   "bin": {
-    "register": "./lib/register.js"
+    "register": "./lib/src/register.js"
   },
   "scripts": {
     "build": "tsc",
-    "clean": "rm lib/*",
+    "clean": "rm -r lib/*",
     "prepack": "npm run clean && npm run build && npm test",
     "prepare": "npm run build",
     "prepublishOnly": "npm test",
@@ -42,10 +42,10 @@
   "author": "Mimickal",
   "license": "LGPL-3.0",
   "peerDependencies": {
+    "@discordjs/builders": "^1.1.0",
     "discord.js": "^14"
   },
   "devDependencies": {
-    "@sapphire/shapeshift": "^3.9.0",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/mocha": "^10.0.1",
@@ -58,6 +58,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@sapphire/shapeshift": "^3.9.0",
     "commander": "^10.0.1"
   }
 }

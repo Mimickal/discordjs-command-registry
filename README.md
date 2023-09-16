@@ -6,7 +6,12 @@ src="https://www.gnu.org/graphics/lgplv3-with-text-154x68.png">
 
 _Now with 100% more TypeScript!_
 
-_**NOTE: version 2.x of this library supports discord.js v14. If you still need
+_**Updates:**_
+- _**Version 3.x of this library no longer forwards vanilla builder
+utilities. See [Helpers](#helpers).**_
+- _**Version 2.2.0 of this library added TypeScript support. This version can
+still be used with JavaScript without issues.**_
+- _**Version 2.x of this library supports discord.js v14. If you still need
 v13 support, use an older 1.x version of this library.**_
 
 ## What is this?
@@ -49,8 +54,8 @@ Discord.js `Interaction` instance. The `SlashCommandRegistry` will figure out
 which handler to call based on the received `Interaction`.
 
 ```js
+const { ApplicationCommandType } = require('discord.js');
 const {
-    ApplicationCommandType,
     SlashCommandRegistry,
     // Can also import these directly, but you don't need them
     // ContextMenuCommandBuilder,
@@ -206,7 +211,7 @@ const client = new Discord.Client({...});
 const commands = new SlashCommandRegistry();
 // Additional setup omitted for brevity...
 
-client.on(Discord.Constants.Events.INTERACTION_CREATE, (interaction) => {
+client.on(Discord.Events.InteractionCreate, (interaction) => {
     commands.execute(interaction)
         .then(result => console.log('Command returned this', result))
         .catch(err => console.error('Command failed', err));
@@ -280,14 +285,12 @@ const commands = new SlashCommandRegistry()
 
 ## Helpers
 
-The Discord.js builders package [has a lot of neat
-helper functions](https://discord.js.org/docs/packages/builders/main#/docs/discord.js/14.9.0/general/welcome).
-The command registry passes all of these functions through, so they can be
-included directly (preventing the need to add / import `@discordjs/builders`).
-
-```js
-const { bold, hyperlink, time } = require('discord-command-registry');
-```
+We no longer export `@discordjs/builders` helper functions like `bold` and
+`hyperlink`. Originally, `@discordjs/builders` was a separate package, so
+forwarding its functions prevented developers from needing to add it directly.
+These functions have since been integrated into the parent `discord.js` package,
+so our export is no longer necessary. Just import them directly from
+`discord.js` instead.
 
 # License
 

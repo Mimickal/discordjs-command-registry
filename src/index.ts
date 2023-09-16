@@ -7,7 +7,6 @@
  * License v3.0. See LICENSE.md or
  * <https://www.gnu.org/licenses/lgpl-3.0.en.html> for more information.
  ******************************************************************************/
-export * from '@discordjs/builders'; // Forward utils and stuff
 export {
 	ContextMenuCommandBuilder,
 	Handler,
