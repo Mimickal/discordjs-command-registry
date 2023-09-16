@@ -1,6 +1,6 @@
 {
   "name": "discord-command-registry",
-  "version": "2.2.2",
+  "version": "3.0.0",
   "description": "A structure for Discord.js slash commands that allow you to define, register, and execute slash commands all in one place.",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
