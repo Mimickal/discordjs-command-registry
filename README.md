@@ -65,7 +65,7 @@ const {
 } = require('discord-command-registry');
 
 const commands = new SlashCommandRegistry()
-    .addDefaultHandler(interaction => interaction.reply("I can't do this yet"))
+    .setDefaultHandler(interaction => interaction.reply("I can't do this yet"))
     .addCommand(command => command
         .setName('ping')
         .setDescription('Ping pong command')
@@ -294,8 +294,8 @@ const {
 
 const commands = new SlashCommandRegistry()
     .addCommand(command => command
-        .addName('mycmd')
-        .addDescription('Example command that has an application option')
+        .setName('mycmd')
+        .setDescription('Example command that has an application option')
         // New function this library adds. Uses string options under the hood.
         .addApplicationOption(option => option
             .setName('app')
