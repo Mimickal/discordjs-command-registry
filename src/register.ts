@@ -11,7 +11,9 @@
 import { lstatSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { Command } from 'commander';
-import { version } from '../package.json';
+// Using require instead of import uses actual package.json
+// instead of including a copy in the generated code.
+const { version } = require('../package.json');
 
 const cliArgs = new Command()
 	.description([
