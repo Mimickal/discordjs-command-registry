@@ -16,6 +16,7 @@ export {
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
 
+// TODO we might consider exporting all of these at the root, to match discord.js.
 import * as Middleware from './middleware';
 import * as Options from './options';
 import SlashCommandRegistry from './registry';

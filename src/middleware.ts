@@ -15,6 +15,9 @@ import {
 
 import { Handler } from './builders';
 
+/** Type that says `guild` is always set. */
+export type WithGuild<T> = T & { get guild(): Guild };
+
 /**
  * Command handler middleware that only runs the handler if the user who
  * initiated the interaction has the {@link PermissionFlagsBits.Administrator}
@@ -46,7 +49,7 @@ export function requireAdmin<T extends CommandInteraction>(
  * instead.
  */
 export function requireGuild<T extends CommandInteraction>(
-	handler: Handler<T & { get guild(): Guild }>,
+	handler: Handler<WithGuild<T>>,
 	reject?: Handler<T>,
 ): Handler<T> {
 	return function(interaction: T): unknown {
