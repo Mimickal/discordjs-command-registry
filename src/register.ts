@@ -11,14 +11,16 @@
 import { lstatSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { Command } from 'commander';
-import { version } from '../package.json';
+// Using require instead of import uses actual package.json
+// instead of including a copy in the generated code.
+const { name, version } = require('../package.json');
 
 const cliArgs = new Command()
 	.description([
 		"Registers a SlashCommandRegistry's commands with Discord's API.",
 		'This only needs to be done once after commands are updated. Updating',
 		'commands globally can take some time to propagate! For testing, use',
-		'guild-specific commands (specify "guild").',
+		'guild-specific commands (specify --guild). Guild commands propagate instantly.',
 	].join(' '))
 	.argument('<registry>',
 		'Path to a JS (or TS) file whose default export is a SlashCommandRegistry.',
@@ -39,7 +41,9 @@ const cliArgs = new Command()
 			return config;
 		},
 	)
-	.option('-g, --guild <string>', 'A Discord guild ID.')
+	.option('-g, --guild <string>',
+		'A Discord guild ID. Only register commands in this guild.'
+	)
 	.option('-n, --names <string...>', 'Only register these commands.')
 	.option('-t, --token <string|path>',
 		'Path to a token file OR a raw token string.\n' +
@@ -51,7 +55,7 @@ const cliArgs = new Command()
 				: value;
 		},
 	)
-	.version(version)
+	.version(version, '-v, --version', `Print ${name} version and exit.`)
 	.parse(process.argv);
 
 const registry = cliArgs.processedArgs[0];

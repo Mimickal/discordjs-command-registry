@@ -16,9 +16,11 @@ export {
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
 
+import * as Middleware from './middleware';
 import * as Options from './options';
 import SlashCommandRegistry from './registry';
 export {
+	Middleware,
 	Options,
 	SlashCommandRegistry,
 };

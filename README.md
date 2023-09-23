@@ -65,7 +65,7 @@ const {
 } = require('discord-command-registry');
 
 const commands = new SlashCommandRegistry()
-    .addDefaultHandler(interaction => interaction.reply("I can't do this yet"))
+    .setDefaultHandler(interaction => interaction.reply("I can't do this yet"))
     .addCommand(command => command
         .setName('ping')
         .setDescription('Ping pong command')
@@ -114,17 +114,17 @@ module.exports = commands;
 
 ```sh
 # If your app ID and token are set in commands.js:
-npm exec register src/commands.js
+npx register src/commands.js
 
 # If your app ID and token are defined in a config file:
 # NOTE: don't forget the -- to pass args to the script!
-npm exec register src/commands.js -- --config path/to/my/config.json
+npx register src/commands.js -- --config path/to/my/config.json
 
 # If you want to pass app ID and token in directly:
 # You can provide token as a string or a file, but you should prefer files to
 # avoid printing your token in your shell.
-npm exec register src/commands.js -- --app 1234 --token path/to/token_file
-npm exec register src/commands.js -- --app 1234 --token "my token text"
+npx register src/commands.js -- --app 1234 --token path/to/token_file
+npx register src/commands.js -- --app 1234 --token "my token text"
 ```
 
 ### Using the script with TypeScript
@@ -133,9 +133,19 @@ If you're using TypeScript and aren't transpiling to JavaScript (e.g. running
 your bot with `ts-node`), you can still use this script. This library ships
 with a separate, stand-alone TypeScript version of this register script.
 
+Like the JavaScript version, put your `SlashCommandRegistry` in its own file
+and make it the default export:
+
+```ts
+// src/commands.ts
+// Define your SlashCommandRegistry as the default export in its own file.
+const commands = new SlashCommandRegistry();
+export default commands;
+```
+
 Then you can run the register script from `node_modules` like this:
 ```sh
-npx ts-node --esm --skipIgnore --logError --compilerOptions '{"esModuleInterop":true}' node_modules/discord-command-registry/src/register.ts
+npx ts-node --esm --skipIgnore --logError --compilerOptions '{"esModuleInterop":true,"resolveJsonModule":true}' node_modules/discord-command-registry/src/register.ts
 ```
 
 If you'd rather remove all the `ts-node` flags, you can also specify these
@@ -148,8 +158,22 @@ options in your `tsconfig.json`, like this:
         "logError": true,
         "compilerOptions": {
             "esModuleInterop": true,
+            "resolveJsonModule": true,
         }
     }
+}
+```
+
+### `--config` JSON format
+
+You can provide registration configuration from a JSON file instead of
+specifying individual flags. The following fields are supported:
+
+```json
+{
+    "token": "<your Discord bot token>",
+    "app": "<Discord bot application ID>",
+    "guild": "<ID of Discord guild to register commands in>"
 }
 ```
 
@@ -248,11 +272,14 @@ these additional option types:
 
 (Note: these are registered as string options under the hood)
 
-- `SlashCommandCustomOption`
-- `addApplicationOption(custom_option)`
-- `addEmojiOption(custom_option)`
-- `getApplication(interaction, option_name, required=false)`
-- `getEmoji(interaction, option_name, required=false)`
+- New types
+  - `SlashCommandCustomOption`
+- New builder options
+  - `addApplicationOption(custom_option)`
+  - `addEmojiOption(custom_option)`
+- Option resolvers (via `Options.getX`)
+  - `getApplication(interaction, option_name, required=false)`
+  - `getEmoji(interaction, option_name, required=false)`
 
 To use these, register the option using the appropriate custom builder, then
 use the `Options.getX(...)` helpers to retrieve the value.
@@ -267,15 +294,15 @@ const {
 
 const commands = new SlashCommandRegistry()
     .addCommand(command => command
-        .addName('mycmd')
-        .addDescription('Example command that has an application option')
-        // Add your application option as a string option
+        .setName('mycmd')
+        .setDescription('Example command that has an application option')
+        // New function this library adds. Uses string options under the hood.
         .addApplicationOption(option => option
             .setName('app')
             .setDescription('An application ID')
         )
         .setHandler(async (interaction) => {
-            // Use this function to resolve that string option into an application.
+            // Use this function to resolve that option into an application.
             // NOTE this makes an HTTP call and so returns a promise.
             const app = await Options.getApplication(interaction, 'app');
             return interaction.reply(`Application name: ${app.name}`);
@@ -283,11 +310,73 @@ const commands = new SlashCommandRegistry()
     );
 ```
 
+## Handler middleware
+
+You may find yourself doing the same operations across multiple handlers.
+For example, checking if an interaction came from a guild. This library provides
+several middleware helpers for common operations like this. You can use this
+pattern to factor out boilerplate code, so your handlers can focus on the unique
+operations they need to perform.
+
+- `requireAdmin(handler)`
+- `requireGuild(handler)`
+
+These functions are implemented as [decorators](https://en.wikipedia.org/wiki/Decorator_pattern)
+that you wrap your existing handlers with:
+
+```js
+const { Middleware, SlashCommandBuilder } = require('discord-command-registry');
+const { requireGuild } = Middleware;
+
+const cmd1 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler1));
+const cmd2 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler2));
+
+// interaction.guild is now guaranteed to not be null
+function cmdHandler1(interaction) {
+    interaction.guild; // Not null!
+}
+
+function cmdHandler2(interaction) {
+    // Some guild-specific logic...
+}
+```
+
+### In TypeScript
+
+Middleware decorators narrow the interaction type, where applicable.
+For example, in a handler function decorated with `requireGuild()`,
+`interaction.guild` is type `Guild` instead of the usual `Guild | null`.
+
+Types can be a little tricky with custom decorators, so here's a TypeScript
+example to get you started:
+
+```ts
+import { CommandInteraction } from 'discord.js';
+import { Handler, SlashCommandBuilder } from 'discord-command-registry';
+
+function requireRed<T extends CommandInteraction>(handler: Handler<T>): Handler<T> {
+    return function(interaction: T): unknown {
+        if (
+            interaction.inCachedGuild() &&
+            interaction.member.displayHexColor === '#FF0000'
+        ) {
+            return handler(interaction);
+        } else {
+            return interaction.reply('I only talk to red people!');
+        }
+    }
+}
+
+const cmd = new SlashCommandBuilder()
+    .setName('red-cmd')
+    .setHandler(requireRed(interaction => interaction.reply('Hello red person!')));
+```
+
 ## Helpers
 
 We no longer export `@discordjs/builders` helper functions like `bold` and
 `hyperlink`. Originally, `@discordjs/builders` was a separate package, so
-forwarding its functions prevented developers from needing to add it directly.
+forwarding its functions saved developers from needing to add it directly.
 These functions have since been integrated into the parent `discord.js` package,
 so our export is no longer necessary. Just import them directly from
 `discord.js` instead.
