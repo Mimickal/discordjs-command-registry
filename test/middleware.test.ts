@@ -15,11 +15,14 @@ const { requireAdmin, requireGuild } = Middleware;
 
 import { MockCommandInteraction, MockGuildMember } from './mock';
 
+const STANDARD_HANDLER_MSG = 'Standard handler' as const;
+const REJECTED_HANDLER_MSG = 'Rejected handler' as const;
+
 describe('Middleware', function() {
 describe(requireAdmin.name, function() {
 	const cmd = new SlashCommandBuilder().setHandler(requireAdmin(
-		(interaction) => 'Standard handler',
-		(interaction) => 'Rejected handler',
+		(interaction) => STANDARD_HANDLER_MSG,
+		(interaction) => REJECTED_HANDLER_MSG,
 	));
 
 	it('Standard handler called for Admin user', async function() {
@@ -32,7 +35,7 @@ describe(requireAdmin.name, function() {
 		});
 
 		const result = await cmd.handler!(interaction);
-		expect(result).to.equal('Standard handler');
+		expect(result).to.equal(STANDARD_HANDLER_MSG);
 	});
 
 	it('Rejected handler called for non-Admin user', async function() {
@@ -45,7 +48,7 @@ describe(requireAdmin.name, function() {
 		});
 
 		const result = await cmd.handler!(interaction);
-		expect(result).to.equal('Rejected handler');
+		expect(result).to.equal(REJECTED_HANDLER_MSG);
 	});
 
 	it('Rejected handler called for non-Guild interaction', async function() {
@@ -55,7 +58,34 @@ describe(requireAdmin.name, function() {
 		});
 
 		const result = await cmd.handler!(interaction);
-		expect(result).to.equal('Rejected handler');
+		expect(result).to.equal(REJECTED_HANDLER_MSG);
+	});
+});
+
+describe(requireGuild.name, function() {
+	const cmd = new SlashCommandBuilder().setHandler(requireGuild(
+		(interaction) => STANDARD_HANDLER_MSG,
+		(interaction) => REJECTED_HANDLER_MSG,
+	));
+
+	it('Standard handler called for interaction in Guild', async function() {
+		const interaction = new MockCommandInteraction({
+			name: 'test',
+			is_in_guild: true,
+		});
+
+		const result = await cmd.handler!(interaction);
+		expect(result).to.equal(STANDARD_HANDLER_MSG);
+	});
+
+	it('Rejected handler called for interaction outside Guild', async function() {
+		const interaction = new MockCommandInteraction({
+			name: 'test',
+			is_in_guild: false,
+		});
+
+		const result = await cmd.handler!(interaction);
+		expect(result).to.equal(REJECTED_HANDLER_MSG);
 	});
 });
 });
