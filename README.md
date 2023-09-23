@@ -310,6 +310,68 @@ const commands = new SlashCommandRegistry()
     );
 ```
 
+## Handler middleware
+
+You may find yourself doing the same operations across multiple handlers.
+For example, checking if an interaction came from a guild. This library provides
+several middleware helpers for common operations like this. You can use this
+pattern to factor out boilerplate code, so your handlers can focus on the unique
+operations they need to perform.
+
+- `requireAdmin(handler)`
+- `requireGuild(handler)`
+
+These functions are implemented as [decorators](https://en.wikipedia.org/wiki/Decorator_pattern)
+that you wrap your existing handlers with:
+
+```js
+const { Middleware, SlashCommandBuilder } = require('discord-command-registry');
+const { requireGuild } = Middleware;
+
+const cmd1 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler1));
+const cmd2 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler2));
+
+// interaction.guild is now guaranteed to not be null
+function cmdHandler1(interaction) {
+    interaction.guild; // Not null!
+}
+
+function cmdHandler2(interaction) {
+    // Some guild-specific logic...
+}
+```
+
+### In TypeScript
+
+Middleware decorators narrow the interaction type, where applicable.
+For example, in a handler function decorated with `requireGuild()`,
+`interaction.guild` is type `Guild` instead of the usual `Guild | null`.
+
+Types can be a little tricky with custom decorators, so here's a TypeScript
+example to get you started:
+
+```ts
+import { CommandInteraction } from 'discord.js';
+import { Handler, SlashCommandBuilder } from 'discord-command-registry';
+
+function requireRed<T extends CommandInteraction>(handler: Handler<T>): Handler<T> {
+    return function(interaction: T): unknown {
+        if (
+            interaction.inCachedGuild() &&
+            interaction.member.displayHexColor === '#FF0000'
+        ) {
+            return handler(interaction);
+        } else {
+            return interaction.reply('I only talk to red people!');
+        }
+    }
+}
+
+const cmd = new SlashCommandBuilder()
+    .setName('red-cmd')
+    .setHandler(requireRed(interaction => interaction.reply('Hello red person!')));
+```
+
 ## Helpers
 
 We no longer export `@discordjs/builders` helper functions like `bold` and
