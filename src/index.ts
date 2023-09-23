@@ -18,13 +18,22 @@ export {
 export * from './middleware';
 export * from './options';
 
-import * as Options from './options';
+import {
+	getApplication,
+	getEmoji,
+} from './options';
+
+/**
+ * @deprecated Import these methods directly from the root package instead.
+ * {@link Options} will be removed in v4.0.0.
+ */
+const Options = Object.freeze({
+	getApplication,
+	getEmoji,
+});
+
 import SlashCommandRegistry from './registry';
 export {
-	/**
-	 * @deprecated Import the methods from {@link Options} methods directly
-	 * from the root package instead.
-	 */
 	Options,
 	SlashCommandRegistry,
 };
