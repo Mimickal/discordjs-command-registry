@@ -18,7 +18,7 @@ import {
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 	SlashCommandRegistry,
-} from '../src';
+} from '..';
 import { BuilderInput } from '../src/builders';
 
 type CanSetHandler = new () => {

@@ -10,8 +10,11 @@
 import { expect } from 'chai';
 import { PermissionFlagsBits } from 'discord.js';
 
-import { Middleware, SlashCommandBuilder } from '../src';
-const { requireAdmin, requireGuild } = Middleware;
+import {
+	requireAdmin,
+	requireGuild,
+	SlashCommandBuilder,
+} from '..';
 
 import { MockCommandInteraction, MockGuildMember } from './mock';
 

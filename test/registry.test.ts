@@ -22,7 +22,7 @@ import {
 	SlashCommandRegistry,
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
-} from '../src';
+} from '..';
 
 import { MockCommandInteraction, mockAgent } from './mock';
 

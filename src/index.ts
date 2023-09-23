@@ -15,13 +15,16 @@ export {
 	SlashCommandSubcommandBuilder,
 	SlashCommandSubcommandGroupBuilder,
 } from './builders';
+export * from './middleware';
+export * from './options';
 
-// TODO we might consider exporting all of these at the root, to match discord.js.
-import * as Middleware from './middleware';
 import * as Options from './options';
 import SlashCommandRegistry from './registry';
 export {
-	Middleware,
+	/**
+	 * @deprecated Import the methods from {@link Options} methods directly
+	 * from the root package instead.
+	 */
 	Options,
 	SlashCommandRegistry,
 };

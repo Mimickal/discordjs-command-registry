@@ -277,18 +277,18 @@ these additional option types:
 - New builder options
   - `addApplicationOption(custom_option)`
   - `addEmojiOption(custom_option)`
-- Option resolvers (via `Options.getX`)
+- Option resolvers
   - `getApplication(interaction, option_name, required=false)`
   - `getEmoji(interaction, option_name, required=false)`
 
 To use these, register the option using the appropriate custom builder, then
-use the `Options.getX(...)` helpers to retrieve the value.
+use the `getX(...)` helpers to retrieve the value.
 
 For example, this is a functional example of an Application option:
 
 ```js
 const {
-    Options,
+    getApplication,
     SlashCommandRegistry,
 } = require('discord-command-registry');
 
@@ -304,7 +304,7 @@ const commands = new SlashCommandRegistry()
         .setHandler(async (interaction) => {
             // Use this function to resolve that option into an application.
             // NOTE this makes an HTTP call and so returns a promise.
-            const app = await Options.getApplication(interaction, 'app');
+            const app = await getApplication(interaction, 'app');
             return interaction.reply(`Application name: ${app.name}`);
         });
     );
@@ -325,8 +325,10 @@ These functions are implemented as [decorators](https://en.wikipedia.org/wiki/De
 that you wrap your existing handlers with:
 
 ```js
-const { Middleware, SlashCommandBuilder } = require('discord-command-registry');
-const { requireGuild } = Middleware;
+const {
+    requireGuild,
+    SlashCommandBuilder,
+} = require('discord-command-registry');
 
 const cmd1 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler1));
 const cmd2 = new SlashCommandBuilder().setHandler(requireGuild(cmdHandler2));

@@ -10,7 +10,7 @@
 import { expect } from 'chai';
 import { Application, Guild, GuildEmoji } from 'discord.js';
 
-import { Options } from '../src';
+import { getApplication, getEmoji } from '..';
 import { mockAgent, MockCommandInteraction } from './mock';
 
 describe('Option resolvers', function() {
@@ -30,12 +30,12 @@ describe('Option resolvers', function() {
 		});
 	}
 
-	describe('getApplication()', function() {
+	describe(getApplication.name, function() {
 
 		it('Required but not provided', async function() {
 			const interaction = makeInteractionWithOpt(undefined);
 			try {
-				await Options.getApplication(interaction, TEST_OPT_NAME, true);
+				await getApplication(interaction, TEST_OPT_NAME, true);
 				return expect.fail('Expected exception but got none');
 			} catch (err) {
 				expect(err).to.be.instanceOf(TypeError);
@@ -63,38 +63,38 @@ describe('Option resolvers', function() {
 
 			const interaction = makeInteractionWithOpt(test_app_id);
 
-			const app = await Options.getApplication(interaction, TEST_OPT_NAME);
+			const app = await getApplication(interaction, TEST_OPT_NAME);
 			expect(app).to.be.instanceOf(Application);
 			expect(app.id).to.equal(test_app_id);
 			expect(app.name).to.equal(test_app_name);
 		});
 	});
 
-	describe('getEmoji()', function() {
+	describe(getEmoji.name, function() {
 
 		it('Required but not provided', function() {
 			const interaction = makeInteractionWithOpt(undefined);
 			expect(
-				() => Options.getEmoji(interaction, TEST_OPT_NAME, true)
+				() => getEmoji(interaction, TEST_OPT_NAME, true)
 			).to.throw(TypeError, `Required option "${TEST_OPT_NAME}" not found.`);
 		});
 
 		it('Optional and not provided', function() {
 			const interaction = makeInteractionWithOpt(undefined);
-			const emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+			const emoji = getEmoji(interaction, TEST_OPT_NAME);
 			expect(emoji).to.be.null;
 		});
 
 		it('Not an emoji string', function() {
 			const interaction = makeInteractionWithOpt('not an emoji');
-			const emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+			const emoji = getEmoji(interaction, TEST_OPT_NAME);
 			expect(emoji).to.be.null;
 		});
 
 		it('Built-in emoji string', function() {
 			const test_str = '🦊';
 			const interaction = makeInteractionWithOpt(test_str);
-			const emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+			const emoji = getEmoji(interaction, TEST_OPT_NAME);
 			expect(emoji).to.be.a.string;
 			expect(emoji).to.equal(test_str);
 		});
@@ -103,7 +103,7 @@ describe('Option resolvers', function() {
 			// These are all emojis that were demonstrated to trip up the regex
 			Array.of('1️⃣', '🕴️', '🎞️', '🖼️').forEach(emoji_str => {
 				const interaction = makeInteractionWithOpt(emoji_str);
-				const got_emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+				const got_emoji = getEmoji(interaction, TEST_OPT_NAME);
 				expect(got_emoji).to.be.a.string;
 				expect(got_emoji).to.equal(emoji_str);
 			});
@@ -137,7 +137,7 @@ describe('Option resolvers', function() {
 				const interaction = makeInteractionWithOpt(TEST_EMOJI_ID);
 				addTestEmojiToClient(interaction)
 
-				const emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+				const emoji = getEmoji(interaction, TEST_OPT_NAME);
 				expect(emoji).to.be.instanceOf(GuildEmoji);
 				expect(emoji?.toString()).to.equal(TEST_EMOJI_STR);
 			});
@@ -146,7 +146,7 @@ describe('Option resolvers', function() {
 				const interaction = makeInteractionWithOpt(TEST_EMOJI_STR);
 				addTestEmojiToClient(interaction);
 
-				const emoji = Options.getEmoji(interaction, TEST_OPT_NAME);
+				const emoji = getEmoji(interaction, TEST_OPT_NAME);
 				expect(emoji).to.be.instanceOf(GuildEmoji)
 				expect(emoji?.toString()).to.equal(TEST_EMOJI_STR);
 			});
